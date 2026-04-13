@@ -5,6 +5,7 @@ import { Send, Settings, Bot } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { ApiKeyDialog } from './ApiKeyDialog';
 import { useDateRange } from '@/context/DateRangeContext';
+import { useStats } from '@/hooks/useStats';
 import { Spinner } from '@/components/ui/Spinner';
 import type { ChatMessage as ChatMsgType } from '@/types';
 
@@ -15,6 +16,7 @@ const WELCOME: ChatMsgType = {
 
 export function ChatPanel() {
   const { from, to } = useDateRange();
+  const { data: statsData } = useStats();
   const [messages, setMessages] = useState<ChatMsgType[]>([WELCOME]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,6 +39,18 @@ export function ChatPanel() {
 
     try {
       const apiKey = typeof window !== 'undefined' ? (localStorage.getItem('sac_openai_key') ?? '') : '';
+
+      const stats = {
+        total: statsData?.total ?? 0,
+        avgSentiment: statsData?.avg_sentiment ?? null,
+        criticalCount: statsData?.critical_count ?? 0,
+        topBarri: statsData?.by_barri[0]?.barri ?? null,
+        topCanal: statsData?.by_canal[0]?.canal ?? null,
+        topCategory: statsData?.by_clas1[0]?.category ?? null,
+        byBarri: Object.fromEntries((statsData?.by_barri ?? []).slice(0, 5).map(b => [b.barri, b.count])),
+        byCanal: Object.fromEntries((statsData?.by_canal ?? []).map(c => [c.canal, c.count])),
+      };
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,6 +58,7 @@ export function ChatPanel() {
           messages: newMessages.slice(1), // exclude welcome
           filters: { from: from.toISOString(), to: to.toISOString() },
           apiKey: apiKey || undefined,
+          stats,
         }),
       });
       const data = await res.json();

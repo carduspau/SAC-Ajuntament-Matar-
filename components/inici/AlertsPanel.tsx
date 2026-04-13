@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { supabase } from '@/lib/supabase';
 import { useDateRange } from '@/context/DateRangeContext';
-import { formatDate, truncate, buildQueryString } from '@/lib/utils';
+import { formatDate, truncate } from '@/lib/utils';
 import { parseSentiment } from '@/lib/sentiment';
 import type { SacMessage } from '@/types';
 import Link from 'next/link';
@@ -15,27 +16,30 @@ export function AlertsPanel() {
   const [alerts, setAlerts] = useState<SacMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetch_ = useCallback(async () => {
     setLoading(true);
-    const qs = buildQueryString({
-      from: from.toISOString(),
-      to: to.toISOString(),
-      sortBy: 'sentiment',
-      sortDir: 'asc',
-      pageSize: 10,
-    });
-    fetch(`/api/messages?${qs}`)
-      .then(r => r.json())
-      .then(d => {
-        const criticals = (d.data ?? []).filter((m: SacMessage) => {
-          const s = parseSentiment(m.sentiment);
-          return s !== null && s < 3.5;
-        });
-        setAlerts(criticals.slice(0, 6));
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [from, to]);
+    try {
+      const { data } = await supabase
+        .from('sac_messages')
+        .select('*')
+        .gte('data_inici', from.toISOString())
+        .lte('data_inici', to.toISOString())
+        .order('sentiment', { ascending: true })
+        .limit(30);
+
+      const criticals = (data ?? []).filter((m: SacMessage) => {
+        const s = parseSentiment(m.sentiment);
+        return s !== null && s < 3.5;
+      });
+      setAlerts(criticals.slice(0, 6));
+    } catch {
+      setAlerts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [from.toISOString(), to.toISOString()]);
+
+  useEffect(() => { fetch_(); }, [fetch_]);
 
   return (
     <Card>
@@ -45,7 +49,7 @@ export function AlertsPanel() {
           Alertes crítiques
         </CardTitle>
         <Link
-          href={`/missatges?sentimentMax=3.5`}
+          href="/missatges"
           className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
         >
           Veure totes <ChevronRight className="w-3 h-3" />
@@ -61,7 +65,7 @@ export function AlertsPanel() {
           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-2">
             <span className="text-emerald-600 text-lg">✓</span>
           </div>
-          <p className="text-sm text-gray-500">No hi ha alertes crítiques</p>
+          <p className="text-sm text-gray-500">No hi ha alertes crítiques en aquest període</p>
         </div>
       ) : (
         <div className="space-y-2">

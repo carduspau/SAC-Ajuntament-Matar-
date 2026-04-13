@@ -1,25 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useDateRange } from './useDateRange';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { computeStats } from '@/lib/aggregations';
+import { useDateRange } from '@/context/DateRangeContext';
 import type { StatsResponse } from '@/types';
-import { buildQueryString } from '@/lib/utils';
 
-export function useStats() {
+export function useStats(barri?: string, canal?: string, clas1?: string) {
   const { from, to } = useDateRange();
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetch_ = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const qs = buildQueryString({ from: from.toISOString(), to: to.toISOString() });
-    fetch(`/api/messages/stats?${qs}`)
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
-      .catch(e => { setError(String(e)); setLoading(false); });
-  }, [from, to]);
+    try {
+      let q = supabase
+        .from('sac_messages')
+        .select('id,sentiment,barri,canal,clas1,data_inici')
+        .gte('data_inici', from.toISOString())
+        .lte('data_inici', to.toISOString());
+
+      if (barri) q = q.eq('barri', barri);
+      if (canal) q = q.eq('canal', canal);
+      if (clas1) q = q.eq('clas1', clas1);
+
+      const { data: rows, error: err } = await q;
+      if (err) throw new Error(err.message);
+      setData(computeStats(rows ?? []));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [from.toISOString(), to.toISOString(), barri, canal, clas1]);
+
+  useEffect(() => { fetch_(); }, [fetch_]);
 
   return { data, loading, error };
 }

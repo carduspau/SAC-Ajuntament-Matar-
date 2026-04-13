@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layers, MapPin } from 'lucide-react';
 import { MapView } from '@/components/map/MapView';
-import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { useStats } from '@/hooks/useStats';
 import { useDateRange } from '@/context/DateRangeContext';
-import { buildQueryString } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import type { FeatureCollection } from 'geojson';
 import type { SacMessage } from '@/types';
 import geojsonData from '@/data/mataro-barris';
@@ -21,15 +19,21 @@ export default function MapaPage() {
   const [messages, setMessages] = useState<SacMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  useEffect(() => {
+  const fetchMessages = useCallback(async () => {
     if (mode !== 'cluster') return;
     setLoadingMessages(true);
-    const qs = buildQueryString({ from: from.toISOString(), to: to.toISOString(), pageSize: 500, page: 0 });
-    fetch(`/api/messages?${qs}`)
-      .then(r => r.json())
-      .then(d => { setMessages(d.data ?? []); setLoadingMessages(false); })
-      .catch(() => setLoadingMessages(false));
+    try {
+      const { data } = await supabase
+        .from('sac_messages')
+        .select('id,saved_id,sentiment,barri,clas1,message,lat,lng,canal,data_inici')
+        .gte('data_inici', from.toISOString())
+        .lte('data_inici', to.toISOString())
+        .limit(1000);
+      setMessages(data ?? []);
+    } catch { setMessages([]); } finally { setLoadingMessages(false); }
   }, [mode, from.toISOString(), to.toISOString()]);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
 
   return (
     <div className="flex flex-col gap-4 h-full">

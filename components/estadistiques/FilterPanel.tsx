@@ -5,9 +5,8 @@ import { Filter, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import type { FilterState } from '@/types';
-import { buildQueryString } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 type LocalFilter = Pick<FilterState, 'barri' | 'canal' | 'clas1' | 'sentimentMin' | 'sentimentMax'>;
 
@@ -27,16 +26,22 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
   const [options, setOptions] = useState<Options>({ barris: [], canals: [], clas1s: [] });
 
   useEffect(() => {
-    // Load distinct values for selectors
-    Promise.all([
-      fetch('/api/messages/stats').then(r => r.json()),
-    ]).then(([stats]) => {
-      setOptions({
-        barris: (stats.by_barri ?? []).map((b: any) => b.barri).filter(Boolean),
-        canals: (stats.by_canal ?? []).map((c: any) => c.canal).filter(Boolean),
-        clas1s: (stats.by_clas1 ?? []).map((c: any) => c.category).filter(Boolean),
-      });
-    }).catch(() => {});
+    async function loadOptions() {
+      try {
+        const [barriRes, canalRes, clas1Res] = await Promise.all([
+          supabase.from('sac_messages').select('barri').not('barri', 'is', null).order('barri'),
+          supabase.from('sac_messages').select('canal').not('canal', 'is', null).order('canal'),
+          supabase.from('sac_messages').select('clas1').not('clas1', 'is', null).order('clas1'),
+        ]);
+        const unique = <T,>(arr: T[]) => [...new Set(arr)];
+        setOptions({
+          barris: unique((barriRes.data ?? []).map((r: { barri: string }) => r.barri).filter(Boolean)),
+          canals: unique((canalRes.data ?? []).map((r: { canal: string }) => r.canal).filter(Boolean)),
+          clas1s: unique((clas1Res.data ?? []).map((r: { clas1: string }) => r.clas1).filter(Boolean)),
+        });
+      } catch { /* ignore */ }
+    }
+    loadOptions();
   }, []);
 
   const activeCount = [filters.barri, filters.canal, filters.clas1, filters.sentimentMin, filters.sentimentMax]

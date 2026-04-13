@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FilterPanel } from '@/components/estadistiques/FilterPanel';
 import { TimelineChart } from '@/components/charts/TimelineChart';
 import { SentimentHistogram } from '@/components/charts/SentimentHistogram';
@@ -10,8 +10,10 @@ import { NeighborhoodBarChart } from '@/components/charts/NeighborhoodBarChart';
 import { HeatmapChart } from '@/components/charts/HeatmapChart';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useDateRange } from '@/context/DateRangeContext';
-import { buildQueryString } from '@/lib/utils';
-import type { StatsResponse, TimelineBucket, TimelineGranularity } from '@/types';
+import { supabase } from '@/lib/supabase';
+import { computeStats, computeTimeline } from '@/lib/aggregations';
+import { parseSentiment } from '@/lib/sentiment';
+import type { StatsResponse, TimelineBucket } from '@/types';
 
 interface LocalFilters {
   barri?: string;
@@ -28,18 +30,43 @@ export default function EstadistiquesPage() {
   const [timeline, setTimeline] = useState<TimelineBucket[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const base = { from: from.toISOString(), to: to.toISOString(), ...filters };
-    Promise.all([
-      fetch(`/api/messages/stats?${buildQueryString(base)}`).then(r => r.json()),
-      fetch(`/api/messages/timeline?${buildQueryString({ ...base, granularity })}`).then(r => r.json()),
-    ]).then(([s, t]) => {
-      setStats(s);
-      setTimeline(Array.isArray(t) ? t : []);
+    try {
+      let q = supabase
+        .from('sac_messages')
+        .select('id,sentiment,barri,canal,clas1,data_inici')
+        .gte('data_inici', from.toISOString())
+        .lte('data_inici', to.toISOString());
+
+      if (filters.barri) q = q.eq('barri', filters.barri);
+      if (filters.canal) q = q.eq('canal', filters.canal);
+      if (filters.clas1) q = q.eq('clas1', filters.clas1);
+
+      const { data: rows } = await q;
+      const allRows = rows ?? [];
+
+      // Client-side sentiment filter
+      const filtered = (filters.sentimentMin !== undefined || filters.sentimentMax !== undefined)
+        ? allRows.filter(r => {
+            const s = parseSentiment(r.sentiment);
+            if (s === null) return false;
+            if (filters.sentimentMin !== undefined && s < filters.sentimentMin) return false;
+            if (filters.sentimentMax !== undefined && s > filters.sentimentMax) return false;
+            return true;
+          })
+        : allRows;
+
+      setStats(computeStats(filtered));
+      setTimeline(computeTimeline(filtered, granularity));
+    } catch (e) {
+      console.error('Estadistiques fetch error:', e);
+    } finally {
       setLoading(false);
-    }).catch(() => setLoading(false));
-  }, [from, to, granularity, JSON.stringify(filters)]);
+    }
+  }, [from.toISOString(), to.toISOString(), granularity, JSON.stringify(filters)]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   function setFilter<K extends keyof LocalFilters>(key: K, value: LocalFilters[K]) {
     setFilters(prev => ({ ...prev, [key]: value }));
