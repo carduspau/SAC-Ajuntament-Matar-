@@ -1,0 +1,115 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Layers, MapPin } from 'lucide-react';
+import { MapView } from '@/components/map/MapView';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { useStats } from '@/hooks/useStats';
+import { useDateRange } from '@/context/DateRangeContext';
+import { buildQueryString } from '@/lib/utils';
+import type { FeatureCollection } from 'geojson';
+import type { SacMessage } from '@/types';
+import geojsonData from '@/data/mataro-barris';
+
+export default function MapaPage() {
+  const { from, to } = useDateRange();
+  const { data: stats } = useStats();
+  const [mode, setMode] = useState<'choropleth' | 'cluster'>('choropleth');
+  const [colorBy, setColorBy] = useState<'count' | 'sentiment'>('count');
+  const [messages, setMessages] = useState<SacMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
+  useEffect(() => {
+    if (mode !== 'cluster') return;
+    setLoadingMessages(true);
+    const qs = buildQueryString({ from: from.toISOString(), to: to.toISOString(), pageSize: 500, page: 0 });
+    fetch(`/api/messages?${qs}`)
+      .then(r => r.json())
+      .then(d => { setMessages(d.data ?? []); setLoadingMessages(false); })
+      .catch(() => setLoadingMessages(false));
+  }, [mode, from.toISOString(), to.toISOString()]);
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      {/* Controls */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-0.5">
+          <button
+            onClick={() => setMode('choropleth')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              mode === 'choropleth' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            Per àrees
+          </button>
+          <button
+            onClick={() => setMode('cluster')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              mode === 'cluster' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <MapPin className="w-4 h-4" />
+            Per punts
+          </button>
+        </div>
+
+        {mode === 'choropleth' && (
+          <div className="w-44">
+            <Select
+              value={colorBy}
+              onChange={e => setColorBy(e.target.value as 'count' | 'sentiment')}
+              options={[
+                { value: 'count', label: 'Color per quantitat' },
+                { value: 'sentiment', label: 'Color per sentiment' },
+              ]}
+            />
+          </div>
+        )}
+
+        {mode === 'cluster' && loadingMessages && (
+          <span className="text-sm text-gray-500">Carregant punts...</span>
+        )}
+        {mode === 'cluster' && !loadingMessages && (
+          <span className="text-sm text-gray-500">{messages.filter(m => m.lat && m.lng).length} punts visibles</span>
+        )}
+
+        {/* Choropleth legend */}
+        {mode === 'choropleth' && colorBy === 'count' && (
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-gray-500">Menys</span>
+            {[0.1, 0.3, 0.5, 0.7, 0.9].map((v, i) => (
+              <div
+                key={i}
+                className="w-6 h-4 rounded-sm"
+                style={{ backgroundColor: `rgba(${Math.round(239 - v * 200)},${Math.round(246 - v * 200)},255,0.75)` }}
+              />
+            ))}
+            <span className="text-xs text-gray-500">Més</span>
+          </div>
+        )}
+        {mode === 'choropleth' && colorBy === 'sentiment' && (
+          <div className="flex items-center gap-3 ml-auto text-xs text-gray-500">
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Crític</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Negatiu</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-indigo-400 inline-block" /> Neutral</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" /> Positiu</span>
+          </div>
+        )}
+      </div>
+
+      {/* Map */}
+      <div className="flex-1 min-h-[500px] rounded-xl overflow-hidden border border-gray-200 shadow-card">
+        <MapView
+          mode={mode}
+          geojson={geojsonData as FeatureCollection}
+          barriStats={stats?.by_barri ?? []}
+          messages={messages}
+          colorBy={colorBy}
+        />
+      </div>
+    </div>
+  );
+}

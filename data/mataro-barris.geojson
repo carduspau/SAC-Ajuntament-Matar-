@@ -1,0 +1,181 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "nom": "Eixample", "codi": "01" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.531],[2.457,41.531],[2.457,41.548],[2.437,41.548],[2.437,41.531]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Cerdanyola", "codi": "02" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.531],[2.437,41.531],[2.437,41.548],[2.415,41.548],[2.415,41.531]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Rocafonda", "codi": "03" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.548],[2.437,41.548],[2.437,41.562],[2.415,41.562],[2.415,41.548]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "El Palau-Escorxador", "codi": "04" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.541],[2.457,41.541],[2.457,41.552],[2.437,41.552],[2.437,41.541]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Vista Alegre", "codi": "05" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.548],[2.457,41.548],[2.457,41.558],[2.437,41.558],[2.437,41.548]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Pla d´en Boet", "codi": "06" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.520],[2.437,41.520],[2.437,41.531],[2.415,41.531],[2.415,41.520]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Cirera", "codi": "07" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.562],[2.437,41.562],[2.437,41.575],[2.415,41.575],[2.415,41.562]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Molins", "codi": "08" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.558],[2.457,41.558],[2.457,41.568],[2.437,41.568],[2.437,41.558]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Havana", "codi": "09" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.520],[2.457,41.520],[2.457,41.531],[2.437,41.531],[2.437,41.520]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Peramàs-Esmandies", "codi": "10" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.457,41.541],[2.475,41.541],[2.475,41.555],[2.457,41.555],[2.457,41.541]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Camí Ral", "codi": "11" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.457,41.531],[2.475,41.531],[2.475,41.541],[2.457,41.541],[2.457,41.531]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Riera", "codi": "12" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.457,41.520],[2.475,41.520],[2.475,41.531],[2.457,41.531],[2.457,41.520]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Gatassa", "codi": "13" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.457,41.555],[2.475,41.555],[2.475,41.568],[2.457,41.568],[2.457,41.555]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Vallveric", "codi": "14" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.575],[2.437,41.575],[2.437,41.588],[2.415,41.588],[2.415,41.575]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Tres Turons", "codi": "15" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.568],[2.457,41.568],[2.457,41.580],[2.437,41.580],[2.437,41.568]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Mataró Nord", "codi": "16" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.588],[2.457,41.588],[2.457,41.600],[2.415,41.600],[2.415,41.588]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Les Santes", "codi": "17" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.457,41.580],[2.475,41.580],[2.475,41.592],[2.457,41.592],[2.457,41.580]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Centre", "codi": "18" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.531],[2.450,41.531],[2.450,41.541],[2.437,41.541],[2.437,41.531]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Pla de la Unió", "codi": "19" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.437,41.510],[2.457,41.510],[2.457,41.520],[2.437,41.520],[2.437,41.510]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Vistalegre", "codi": "20" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.415,41.510],[2.437,41.510],[2.437,41.520],[2.415,41.520],[2.415,41.510]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "Can Xammar", "codi": "21" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.457,41.568],[2.475,41.568],[2.475,41.580],[2.457,41.580],[2.457,41.568]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nom": "El Sorrall", "codi": "22" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.475,41.531],[2.490,41.531],[2.490,41.548],[2.475,41.548],[2.475,41.531]]]
+      }
+    }
+  ]
+}
