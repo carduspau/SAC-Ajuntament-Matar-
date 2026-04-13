@@ -61,19 +61,18 @@ function ChoroplethLayer({ geojson, barriStats, colorBy }: Omit<Props, 'mode' | 
         const stat = findStat(feature.properties?.nom ?? '');
         const name = feature.properties?.nom ?? '';
 
-        // Permanent label
+        // Permanent neighbourhood label
         layer.bindTooltip(name, {
           permanent: true,
           direction: 'center',
           className: 'barri-label',
         });
 
-        // Rich hover tooltip
         layer.on('mouseover', function (this: L.Layer) {
           const tooltipContent = `
             <div style="font-weight:600;font-size:13px;margin-bottom:4px">${name}</div>
             <div style="font-size:11px;color:#6b7280">Missatges: <b>${stat?.count ?? 0}</b></div>
-            <div style="font-size:11px;color:#6b7280">Sent. mitjà: <b>${stat?.avg_sentiment?.toFixed(2) ?? '—'}</b></div>
+            <div style="font-size:11px;color:#6b7280">Sent. mitj\u00e0: <b>${stat?.avg_sentiment?.toFixed(2) ?? '\u2014'}</b></div>
             ${stat?.top_category ? `<div style="font-size:11px;color:#9ca3af;margin-top:4px">${stat.top_category}</div>` : ''}
           `;
           layer.unbindTooltip();
@@ -122,14 +121,14 @@ function ClusterLayer({ messages }: { messages: SacMessage[] }) {
         const marker = L.marker([msg.lat, msg.lng]);
         const popup = `
           <div style="max-width:220px">
-            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${msg.barri ?? '—'}</div>
-            <div style="font-size:11px;color:#6b7280;margin-bottom:6px">${msg.clas1 ?? '—'}</div>
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${msg.barri ?? '\u2014'}</div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:6px">${msg.clas1 ?? '\u2014'}</div>
             <div style="font-size:12px;line-height:1.5;color:#374151">${truncate(msg.message, 120)}</div>
-            <div style="font-size:11px;color:#9ca3af;margin-top:6px">Sent: ${msg.sentiment ?? '—'}</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:6px">Sent: ${msg.sentiment ?? '\u2014'}</div>
           </div>
         `;
         marker.bindPopup(popup);
-        marker.bindTooltip(`${msg.barri ?? '—'} · ${msg.clas1 ?? '—'}`, { direction: 'top' });
+        marker.bindTooltip(`${msg.barri ?? '\u2014'} \u00b7 ${msg.clas1 ?? '\u2014'}`, { direction: 'top' });
         group.addLayer(marker);
       }
 
@@ -157,11 +156,16 @@ export default function MapContainerComponent({ mode, geojson, barriStats, messa
       style={{ height: '100%', width: '100%' }}
       zoomControl={true}
     >
+      {/* Esri Light Gray Base */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-        maxZoom={20}
+        attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+        url="https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        maxZoom={16}
+      />
+      {/* Esri Light Gray Reference (labels) */}
+      <TileLayer
+        url="https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+        maxZoom={16}
       />
       {mode === 'choropleth' ? (
         <ChoroplethLayer geojson={geojson} barriStats={barriStats} colorBy={colorBy} />
