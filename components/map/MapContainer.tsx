@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { MapContainer as LeafletMap, TileLayer, GeoJSON, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { FeatureCollection } from 'geojson';
@@ -27,7 +27,7 @@ interface Props {
 
 function ChoroplethLayer({ geojson, barriStats, colorBy }: Omit<Props, 'mode' | 'messages'>) {
   const maxCount = Math.max(...barriStats.map(b => b.count), 1);
-  const byBarri = Object.fromEntries(barriStats.map(b => [b.barri, b]));
+  const barriStatsList = barriStats;
 
   function normalizeBarri(name: string): string {
     return name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -35,14 +35,14 @@ function ChoroplethLayer({ geojson, barriStats, colorBy }: Omit<Props, 'mode' | 
 
   function findStat(featureName: string): BarriStat | undefined {
     const norm = normalizeBarri(featureName);
-    return barriStats.find(b => normalizeBarri(b.barri) === norm)
-        || barriStats.find(b => normalizeBarri(b.barri).includes(norm.slice(0, 6)))
+    return barriStatsList.find(b => normalizeBarri(b.barri) === norm)
+        || barriStatsList.find(b => normalizeBarri(b.barri).includes(norm.slice(0, 6)))
         || undefined;
   }
 
   return (
     <GeoJSON
-      key={`choropleth-${colorBy}`}
+      key={`choropleth-${colorBy}-${barriStats.length}`}
       data={geojson}
       style={(feature) => {
         const stat = findStat(feature?.properties?.nom ?? '');
@@ -51,26 +51,39 @@ function ChoroplethLayer({ geojson, barriStats, colorBy }: Omit<Props, 'mode' | 
           : sentimentMapColor(stat?.avg_sentiment ?? null);
         return {
           fillColor,
-          fillOpacity: 0.7,
-          weight: 2,
-          color: '#ffffff',
-          opacity: 0.8,
+          fillOpacity: stat ? 0.72 : 0.15,
+          weight: 1.5,
+          color: '#6366f1',
+          opacity: 0.6,
         };
       }}
       onEachFeature={(feature, layer) => {
         const stat = findStat(feature.properties?.nom ?? '');
-        const tooltipContent = `
-          <div class="font-semibold text-sm">${feature.properties?.nom}</div>
-          <div class="text-xs text-gray-500 mt-1">Missatges: <b>${stat?.count ?? 0}</b></div>
-          <div class="text-xs text-gray-500">Sent. mitjà: <b>${stat?.avg_sentiment?.toFixed(2) ?? '—'}</b></div>
-          ${stat?.top_category ? `<div class="text-xs text-gray-400 mt-1">${stat.top_category}</div>` : ''}
-        `;
-        layer.bindTooltip(tooltipContent, { sticky: true, className: 'leaflet-custom-tooltip' });
+        const name = feature.properties?.nom ?? '';
+
+        // Permanent label
+        layer.bindTooltip(name, {
+          permanent: true,
+          direction: 'center',
+          className: 'barri-label',
+        });
+
+        // Rich hover tooltip
         layer.on('mouseover', function (this: L.Layer) {
-          (this as L.Path).setStyle({ fillOpacity: 0.9, weight: 3, color: '#4f46e5' });
+          const tooltipContent = `
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${name}</div>
+            <div style="font-size:11px;color:#6b7280">Missatges: <b>${stat?.count ?? 0}</b></div>
+            <div style="font-size:11px;color:#6b7280">Sent. mitjà: <b>${stat?.avg_sentiment?.toFixed(2) ?? '—'}</b></div>
+            ${stat?.top_category ? `<div style="font-size:11px;color:#9ca3af;margin-top:4px">${stat.top_category}</div>` : ''}
+          `;
+          layer.unbindTooltip();
+          layer.bindTooltip(tooltipContent, { sticky: true, className: 'leaflet-custom-tooltip' }).openTooltip();
+          (this as L.Path).setStyle({ fillOpacity: 0.9, weight: 2.5, color: '#4f46e5' });
         });
         layer.on('mouseout', function (this: L.Layer) {
-          (this as L.Path).setStyle({ weight: 2, color: '#ffffff', fillOpacity: 0.7 });
+          layer.unbindTooltip();
+          layer.bindTooltip(name, { permanent: true, direction: 'center', className: 'barri-label' });
+          (this as L.Path).setStyle({ weight: 1.5, color: '#6366f1', fillOpacity: stat ? 0.72 : 0.15 });
         });
       }}
     />
@@ -90,7 +103,7 @@ function ClusterLayer({ messages }: { messages: SacMessage[] }) {
         await import('leaflet.markercluster/dist/MarkerCluster.css');
         await import('leaflet.markercluster/dist/MarkerCluster.Default.css');
       } catch {
-        // CSS import may fail in some setups, that's OK
+        // CSS import may fail in some setups
       }
 
       if (groupRef.current) {
@@ -139,14 +152,16 @@ function ClusterLayer({ messages }: { messages: SacMessage[] }) {
 export default function MapContainerComponent({ mode, geojson, barriStats, messages, colorBy }: Props) {
   return (
     <LeafletMap
-      center={[41.543, 2.445]}
+      center={[41.543, 2.447]}
       zoom={13}
       style={{ height: '100%', width: '100%' }}
       zoomControl={true}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        subdomains="abcd"
+        maxZoom={20}
       />
       {mode === 'choropleth' ? (
         <ChoroplethLayer geojson={geojson} barriStats={barriStats} colorBy={colorBy} />

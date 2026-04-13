@@ -29,9 +29,9 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
     async function loadOptions() {
       try {
         const [barriRes, canalRes, clas1Res] = await Promise.all([
-          supabase.from('sac_messages').select('barri').not('barri', 'is', null).order('barri'),
-          supabase.from('sac_messages').select('canal').not('canal', 'is', null).order('canal'),
-          supabase.from('sac_messages').select('clas1').not('clas1', 'is', null).order('clas1'),
+          supabase.from('sac_messages').select('barri').not('barri', 'is', null).order('barri').limit(5000),
+          supabase.from('sac_messages').select('canal').not('canal', 'is', null).order('canal').limit(5000),
+          supabase.from('sac_messages').select('clas1').not('clas1', 'is', null).order('clas1').limit(5000),
         ]);
         const unique = <T,>(arr: T[]) => Array.from(new Set(arr));
         setOptions({
@@ -84,10 +84,10 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
           placeholder="Totes les categories"
           value={filters.clas1 ?? ''}
           onChange={e => onFilterChange('clas1', e.target.value || undefined)}
-          options={options.clas1s.map(c => ({ value: c, label: c.length > 30 ? c.slice(0, 30) + '…' : c }))}
+          options={options.clas1s.map(c => ({ value: c, label: c.length > 30 ? c.slice(0, 30) + '\u2026' : c }))}
         />
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Sentiment mínim</label>
+          <label className="text-xs font-medium text-gray-600">Sentiment m\u00ednim</label>
           <input
             type="number"
             min={0} max={10} step={0.5}
@@ -98,7 +98,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Sentiment màxim</label>
+          <label className="text-xs font-medium text-gray-600">Sentiment m\u00e0xim</label>
           <input
             type="number"
             min={0} max={10} step={0.5}

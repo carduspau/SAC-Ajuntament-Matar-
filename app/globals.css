@@ -2,39 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #f8f9fb;
-  --foreground: #111827;
+/* Leaflet */
+@import 'leaflet/dist/leaflet.css';
+
+/* Neighbourhood name labels on the choropleth map */
+.barri-label {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+  color: #1e1b4b !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
+.barri-label::before {
+  display: none !important;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
-/* Leaflet popup overrides */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-.leaflet-popup-content {
-  margin: 12px 16px;
+/* Custom hover tooltip */
+.leaflet-custom-tooltip {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  min-width: 160px;
 }
 
-/* recharts tooltip */
-.recharts-tooltip-wrapper {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-}
-
-@layer utilities {
-  .text-balance { text-wrap: balance; }
+.leaflet-custom-tooltip::before {
+  display: none !important;
 }
