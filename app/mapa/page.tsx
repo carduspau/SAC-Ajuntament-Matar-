@@ -29,7 +29,7 @@ export default function MapaPage() {
         .gte('data_inici', from.toISOString())
         .lte('data_inici', to.toISOString())
         .limit(1000);
-      setMessages(data ?? []);
+      setMessages((data ?? []) as SacMessage[]);
     } catch { setMessages([]); } finally { setLoadingMessages(false); }
   }, [mode, from.toISOString(), to.toISOString()]);
 
