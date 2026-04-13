@@ -5,12 +5,30 @@
 /* Leaflet */
 @import 'leaflet/dist/leaflet.css';
 
-/* Neighbourhood name labels on the choropleth map */
+/* ── Neighbourhood pill labels (choropleth) ─────────────────────────────── */
+.hs-neighborhood-label.leaflet-tooltip {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(148, 163, 184, 0.55) !important;
+  border-radius: 999px !important;
+  color: #0f172a !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  padding: 0.24rem 0.5rem !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12) !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+
+.hs-neighborhood-label.leaflet-tooltip::before {
+  display: none !important;
+}
+
+/* Legacy label class kept for fallback */
 .barri-label {
   background: rgba(255, 255, 255, 0.88) !important;
   border: 1px solid rgba(99, 102, 241, 0.25) !important;
   border-radius: 6px !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
   color: #1e1b4b !important;
   font-size: 11px !important;
   font-weight: 600 !important;
@@ -18,22 +36,50 @@
   white-space: nowrap !important;
   pointer-events: none !important;
 }
+.barri-label::before { display: none !important; }
 
-.barri-label::before {
-  display: none !important;
+/* ── Incident point markers (cluster mode) ──────────────────────────────── */
+.hs-users-incident-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 14px -8px rgba(15, 23, 42, 0.75);
+  pointer-events: none;
+  user-select: none;
 }
 
-/* Custom hover tooltip */
-.leaflet-custom-tooltip {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
-  padding: 8px 12px !important;
-  font-size: 12px !important;
-  min-width: 160px;
+.hs-users-incident-marker-single {
+  width: 0.7rem !important;
+  height: 0.7rem !important;
+  border-width: 1.5px !important;
+  font-size: 0 !important;
+  background: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
 }
 
-.leaflet-custom-tooltip::before {
+/* ── Area popup (choropleth hover) ──────────────────────────────────────── */
+.hs-area-popup .leaflet-popup-content-wrapper,
+.hs-point-popup .leaflet-popup-content-wrapper {
+  background: #fff !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 4px 6px -2px rgba(15, 23, 42, 0.05) !important;
+  padding: 0.75rem !important;
+}
+
+.hs-area-popup .leaflet-popup-content,
+.hs-point-popup .leaflet-popup-content {
+  margin: 0 !important;
+}
+
+.hs-area-popup .leaflet-popup-tip-container,
+.hs-point-popup .leaflet-popup-tip-container {
   display: none !important;
 }
