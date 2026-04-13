@@ -45,7 +45,8 @@ function ChoroplethLayer({ geojson, barriStats, colorBy }: Omit<Props, 'mode' | 
       key={`choropleth-${colorBy}-${barriStats.length}`}
       data={geojson}
       style={(feature) => {
-        const stat = findStat(feature?.properties?.nom ?? '');
+        const featureName = feature?.properties?.name ?? feature?.properties?.nom ?? '';
+        const stat = findStat(featureName);
         const fillColor = colorBy === 'count'
           ? countToMapColor(stat?.count ?? 0, maxCount)
           : sentimentMapColor(stat?.avg_sentiment ?? null);
@@ -58,8 +59,8 @@ function ChoroplethLayer({ geojson, barriStats, colorBy }: Omit<Props, 'mode' | 
         };
       }}
       onEachFeature={(feature, layer) => {
-        const stat = findStat(feature.properties?.nom ?? '');
-        const name = feature.properties?.nom ?? '';
+        const name = feature.properties?.name ?? feature.properties?.nom ?? '';
+        const stat = findStat(name);
 
         // Permanent neighbourhood label
         layer.bindTooltip(name, {
