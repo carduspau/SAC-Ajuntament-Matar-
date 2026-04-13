@@ -33,7 +33,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
           supabase.from('sac_messages').select('canal').not('canal', 'is', null).order('canal'),
           supabase.from('sac_messages').select('clas1').not('clas1', 'is', null).order('clas1'),
         ]);
-        const unique = <T,>(arr: T[]) => [...new Set(arr)];
+        const unique = <T,>(arr: T[]) => Array.from(new Set(arr));
         setOptions({
           barris: unique((barriRes.data ?? []).map((r: { barri: string }) => r.barri).filter(Boolean)),
           canals: unique((canalRes.data ?? []).map((r: { canal: string }) => r.canal).filter(Boolean)),
