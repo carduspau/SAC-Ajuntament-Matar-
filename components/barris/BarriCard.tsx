@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { SentimentBadge } from '@/components/ui/Badge';
+import { Badge, SentimentBadge } from '@/components/ui/Badge';
 import { SparklineChart } from '@/components/charts/SparklineChart';
 import { sentimentColor } from '@/lib/sentiment';
-import { buildQueryString } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { computeTimeline } from '@/lib/aggregations';
 import type { BarriStat } from '@/types';
 
 interface Props {
@@ -19,14 +20,42 @@ interface Props {
 export function BarriCard({ stat, from, to, maxCount }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [timeline, setTimeline] = useState<{ value: number }[]>([]);
+  const [canals, setCanals] = useState<{ canal: string; count: number }[]>([]);
+  const [loadingExpand, setLoadingExpand] = useState(false);
 
   useEffect(() => {
     if (!expanded) return;
-    const qs = buildQueryString({ from: from.toISOString(), to: to.toISOString(), barri: stat.barri, granularity: 'day' });
-    fetch(`/api/messages/timeline?${qs}`)
-      .then(r => r.json())
-      .then(d => setTimeline((d ?? []).map((b: any) => ({ value: b.count }))))
-      .catch(() => {});
+    let cancelled = false;
+    setLoadingExpand(true);
+
+    (async () => {
+      const { data } = await supabase
+        .from('sac_messages')
+        .select('data_inici, sentiment, canal')
+        .gte('data_inici', from.toISOString())
+        .lte('data_inici', to.toISOString())
+        .eq('barri', stat.barri);
+
+      if (!cancelled && data) {
+        const buckets = computeTimeline(data, 'day');
+        setTimeline(buckets.map(b => ({ value: b.count })));
+
+        // Canal breakdown
+        const canalMap = new Map<string, number>();
+        for (const row of data) {
+          const c = row.canal ?? 'Desconegut';
+          canalMap.set(c, (canalMap.get(c) ?? 0) + 1);
+        }
+        const sorted = Array.from(canalMap.entries())
+          .map(([canal, count]) => ({ canal, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 4);
+        setCanals(sorted);
+      }
+      if (!cancelled) setLoadingExpand(false);
+    })();
+
+    return () => { cancelled = true; };
   }, [expanded, stat.barri, from.toISOString(), to.toISOString()]);
 
   const pct = maxCount > 0 ? (stat.count / maxCount) * 100 : 0;
@@ -35,18 +64,20 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-gray-900 truncate">{stat.barri}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{stat.top_category ?? '—'}</p>
+          <h3 className="text-sm font-semibold text-slate-900 truncate">{stat.barri}</h3>
+          {stat.top_category && (
+            <Badge variant="info" className="mt-1 text-xs">{stat.top_category}</Badge>
+          )}
         </div>
         <SentimentBadge value={stat.avg_sentiment !== null ? String(stat.avg_sentiment.toFixed(2)) : null} />
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-2xl font-bold text-gray-900">{stat.count.toLocaleString('ca-ES')}</span>
-          <span className="text-xs text-gray-400">missatges</span>
+          <span className="text-2xl font-bold text-slate-900">{stat.count.toLocaleString('ca-ES')}</span>
+          <span className="text-xs text-slate-400">missatges</span>
         </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{ width: `${pct}%`, backgroundColor: sentimentColor(stat.avg_sentiment) }}
@@ -58,15 +89,46 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
         onClick={() => setExpanded(v => !v)}
         className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
       >
-        {expanded ? <><ChevronUp className="w-3 h-3" /> Menys detall</> : <><ChevronDown className="w-3 h-3" /> Veure evolució</>}
+        {expanded
+          ? <><ChevronUp className="w-3 h-3" /> Menys detall</>
+          : <><ChevronDown className="w-3 h-3" /> Veure evolució</>}
       </button>
 
       {expanded && (
-        <div className="border-t border-gray-100 pt-3">
-          {timeline.length > 0 ? (
-            <SparklineChart data={timeline} color={sentimentColor(stat.avg_sentiment)} height={60} />
+        <div className="border-t border-slate-100 pt-3 space-y-4">
+          {loadingExpand ? (
+            <p className="text-xs text-slate-400 text-center py-4">Carregant...</p>
           ) : (
-            <p className="text-xs text-gray-400 text-center py-4">Carregant...</p>
+            <>
+              {timeline.length > 0 ? (
+                <div>
+                  <p className="text-xs text-slate-500 mb-2 font-medium">Evolució diària</p>
+                  <SparklineChart data={timeline} color={sentimentColor(stat.avg_sentiment)} height={60} />
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-2">Sense dades en aquest període</p>
+              )}
+
+              {canals.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-2 font-medium">Per canal</p>
+                  <div className="space-y-1.5">
+                    {canals.map(({ canal, count }) => (
+                      <div key={canal} className="flex items-center gap-2">
+                        <span className="text-xs text-slate-600 w-32 truncate shrink-0">{canal}</span>
+                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-400 rounded-full"
+                            style={{ width: `${(count / stat.count) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-slate-500 w-6 text-right shrink-0">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

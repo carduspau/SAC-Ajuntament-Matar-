@@ -47,8 +47,9 @@ export function ChatPanel() {
         topBarri: statsData?.by_barri[0]?.barri ?? null,
         topCanal: statsData?.by_canal[0]?.canal ?? null,
         topCategory: statsData?.by_clas1[0]?.category ?? null,
-        byBarri: Object.fromEntries((statsData?.by_barri ?? []).slice(0, 5).map(b => [b.barri, b.count])),
+        byBarri: Object.fromEntries((statsData?.by_barri ?? []).slice(0, 8).map(b => [b.barri, b.count])),
         byCanal: Object.fromEntries((statsData?.by_canal ?? []).map(c => [c.canal, c.count])),
+        byClas1: Object.fromEntries((statsData?.by_clas1 ?? []).slice(0, 8).map(c => [c.category, c.count])),
       };
 
       const res = await fetch('/api/chat', {
@@ -62,7 +63,11 @@ export function ChatPanel() {
         }),
       });
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.content ?? 'Error' }]);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.content ?? 'Error',
+        chart: data.chart ?? undefined,
+      }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Error de connexió. Torna-ho a provar.' }]);
     } finally {

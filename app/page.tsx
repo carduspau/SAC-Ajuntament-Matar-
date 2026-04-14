@@ -1,10 +1,15 @@
 'use client';
 
 import React from 'react';
-import { MessageSquare, TrendingUp, AlertTriangle, Tag } from 'lucide-react';
+import {
+  MessageSquare, TrendingUp, AlertTriangle, Tag,
+  Radio, MapPin, AlertOctagon, Layers,
+} from 'lucide-react';
 import { KpiCard } from '@/components/inici/KpiCard';
 import { AlertsPanel } from '@/components/inici/AlertsPanel';
 import { QuickNav } from '@/components/inici/QuickNav';
+import { CategoriesChart } from '@/components/inici/CategoriesChart';
+import { CanalChart } from '@/components/inici/CanalChart';
 import { TimelineChart } from '@/components/charts/TimelineChart';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useStats } from '@/hooks/useStats';
@@ -17,10 +22,13 @@ export default function InicioPage() {
   const { granularity } = useDateRange();
 
   const avgSent = stats?.avg_sentiment;
+  const criticalPct = stats
+    ? ((stats.critical_count / Math.max(stats.total, 1)) * 100).toFixed(1)
+    : null;
 
   return (
     <div className="space-y-6">
-      {/* KPI Grid */}
+      {/* Primary KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Total missatges"
@@ -53,6 +61,39 @@ export default function InicioPage() {
         />
       </div>
 
+      {/* Secondary KPI Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label="Canal principal"
+          value={stats?.by_canal[0]?.canal ?? '—'}
+          sub={stats?.by_canal[0] ? `${stats.by_canal[0].count} missatges` : undefined}
+          icon={<Radio className="w-4 h-4" />}
+          loading={statsLoading}
+        />
+        <KpiCard
+          label="Barris actius"
+          value={stats ? stats.by_barri.length.toLocaleString('ca-ES') : '—'}
+          sub="Barris amb activitat"
+          icon={<MapPin className="w-4 h-4" />}
+          loading={statsLoading}
+        />
+        <KpiCard
+          label="% Missatges crítics"
+          value={criticalPct !== null ? `${criticalPct}%` : '—'}
+          sub="Del total del període"
+          icon={<AlertOctagon className="w-4 h-4" />}
+          variant={criticalPct !== null && parseFloat(criticalPct) > 10 ? 'danger' : 'default'}
+          loading={statsLoading}
+        />
+        <KpiCard
+          label="Categories actives"
+          value={stats ? stats.by_clas1.length.toLocaleString('ca-ES') : '—'}
+          sub="Categories distintes"
+          icon={<Layers className="w-4 h-4" />}
+          loading={statsLoading}
+        />
+      </div>
+
       {/* Timeline Chart */}
       <Card>
         <CardHeader>
@@ -67,14 +108,20 @@ export default function InicioPage() {
         />
       </Card>
 
-      {/* Alerts + Quick Nav */}
+      {/* Categories + Canal charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CategoriesChart data={stats?.by_clas1 ?? []} loading={statsLoading} />
+        <CanalChart data={stats?.by_canal ?? []} loading={statsLoading} />
+      </div>
+
+      {/* Alerts + Quick Nav + Top barris */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <AlertsPanel />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Accés ràpid</h2>
+            <h2 className="text-sm font-semibold text-slate-700 mb-3">Accés ràpid</h2>
             <QuickNav />
           </div>
 
@@ -87,13 +134,13 @@ export default function InicioPage() {
               <div className="space-y-2">
                 {stats.by_barri.slice(0, 5).map((b, i) => (
                   <div key={b.barri} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-4">{i + 1}</span>
+                    <span className="text-xs text-slate-400 w-4">{i + 1}</span>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm text-gray-700">{b.barri}</span>
-                        <span className="text-sm font-semibold text-gray-900">{b.count}</span>
+                        <span className="text-sm text-slate-700">{b.barri}</span>
+                        <span className="text-sm font-semibold text-slate-900">{b.count}</span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-500 rounded-full"
                           style={{ width: `${(b.count / stats.by_barri[0].count) * 100}%` }}

@@ -79,9 +79,16 @@ export interface StatsResponse {
   heatmap: { day: number; hour: number; count: number }[];
 }
 
+export interface ChatChartData {
+  type: 'bar' | 'pie' | 'line';
+  title: string;
+  data: { name: string; value: number }[];
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  chart?: ChatChartData;
 }
 
 export interface ReportConfig {

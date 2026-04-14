@@ -7,6 +7,7 @@ import { DateRangePicker } from './DateRangePicker';
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Inici',
   '/estadistiques': 'Estadístiques',
+  '/alertes': 'Alertes crítiques',
   '/mapa': 'Mapa',
   '/barris': 'Barris',
   '/missatges': 'Missatges',

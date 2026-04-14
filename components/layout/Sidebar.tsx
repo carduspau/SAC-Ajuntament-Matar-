@@ -6,12 +6,15 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart2, Map, Building2,
   MessageSquare, FileText, ChevronLeft, ChevronRight,
+  AlertTriangle, User, LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCriticalCount } from '@/hooks/useCriticalCount';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Inici', icon: LayoutDashboard },
   { href: '/estadistiques', label: 'Estadístiques', icon: BarChart2 },
+  { href: '/alertes', label: 'Alertes crítiques', icon: AlertTriangle },
   { href: '/mapa', label: 'Mapa', icon: Map },
   { href: '/barris', label: 'Barris', icon: Building2 },
   { href: '/missatges', label: 'Missatges', icon: MessageSquare },
@@ -21,6 +24,7 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const criticalCount = useCriticalCount();
 
   return (
     <aside
@@ -49,6 +53,7 @@ export function Sidebar() {
       <nav className="flex-1 py-3 overflow-y-auto">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
+          const isAlertes = href === '/alertes';
           return (
             <Link
               key={href}
@@ -62,12 +67,48 @@ export function Sidebar() {
               )}
               title={collapsed ? label : undefined}
             >
-              <Icon className={cn('w-5 h-5 shrink-0', active ? 'text-blue-600' : 'text-slate-500')} />
-              {!collapsed && <span>{label}</span>}
+              <Icon className={cn(
+                'w-5 h-5 shrink-0',
+                active ? 'text-blue-600' : isAlertes ? 'text-red-500' : 'text-slate-500'
+              )} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1">{label}</span>
+                  {isAlertes && criticalCount !== null && criticalCount > 0 && (
+                    <span className="text-xs bg-red-100 text-red-600 font-semibold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+                      {criticalCount > 99 ? '99+' : criticalCount}
+                    </span>
+                  )}
+                </>
+              )}
             </Link>
           );
         })}
       </nav>
+
+      {/* User section */}
+      <div className={cn(
+        'border-t border-slate-100 px-3 py-3 flex items-center gap-3',
+        collapsed && 'justify-center px-2'
+      )}>
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+          <User className="w-4 h-4 text-blue-600" />
+        </div>
+        {!collapsed && (
+          <>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-slate-900 truncate">Admin SAC</p>
+              <p className="text-xs text-slate-400 truncate">Ajuntament de Mataró</p>
+            </div>
+            <button
+              title="Tancar sessió"
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Collapse toggle */}
       <div className="border-t border-slate-100 p-2">
