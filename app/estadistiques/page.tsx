@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FilterPanel } from '@/components/estadistiques/FilterPanel';
+import { FilterPanel, EMPTY_FILTERS } from '@/components/estadistiques/FilterPanel';
+import type { StatsFilters } from '@/components/estadistiques/FilterPanel';
 import { TimelineChart } from '@/components/charts/TimelineChart';
 import { SentimentHistogram } from '@/components/charts/SentimentHistogram';
 import { CategoryBarChart } from '@/components/charts/CategoryBarChart';
@@ -15,17 +16,16 @@ import { computeStats, computeTimeline } from '@/lib/aggregations';
 import { parseSentiment } from '@/lib/sentiment';
 import type { StatsResponse, TimelineBucket } from '@/types';
 
-interface LocalFilters {
-  barri?: string;
-  canal?: string;
-  clas1?: string;
-  sentimentMin?: number;
-  sentimentMax?: number;
+function sentimentMatches(score: number, category: string): boolean {
+  if (category === 'positiu') return score >= 6;
+  if (category === 'neutre') return score >= 3.5 && score < 6;
+  if (category === 'negatiu') return score < 3.5;
+  return false;
 }
 
 export default function EstadistiquesPage() {
   const { from, to, granularity } = useDateRange();
-  const [filters, setFilters] = useState<LocalFilters>({});
+  const [filters, setFilters] = useState<StatsFilters>(EMPTY_FILTERS);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [timeline, setTimeline] = useState<TimelineBucket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,23 +39,22 @@ export default function EstadistiquesPage() {
         .gte('data_inici', from.toISOString())
         .lte('data_inici', to.toISOString());
 
-      if (filters.barri) q = q.eq('barri', filters.barri);
-      if (filters.canal) q = q.eq('canal', filters.canal);
-      if (filters.clas1) q = q.eq('clas1', filters.clas1);
+      if (filters.barris.length > 0) q = q.in('barri', filters.barris);
+      if (filters.canals.length > 0) q = q.in('canal', filters.canals);
+      if (filters.clas1s.length > 0) q = q.in('clas1', filters.clas1s);
 
       const { data: rows } = await q;
       const allRows = rows ?? [];
 
-      // Client-side sentiment filter
-      const filtered = (filters.sentimentMin !== undefined || filters.sentimentMax !== undefined)
-        ? allRows.filter(r => {
-            const s = parseSentiment(r.sentiment);
-            if (s === null) return false;
-            if (filters.sentimentMin !== undefined && s < filters.sentimentMin) return false;
-            if (filters.sentimentMax !== undefined && s > filters.sentimentMax) return false;
-            return true;
-          })
-        : allRows;
+      // Client-side sentiment category filter
+      const filtered =
+        filters.sentiments.length > 0
+          ? allRows.filter(r => {
+              const s = parseSentiment(r.sentiment);
+              if (s === null) return false;
+              return filters.sentiments.some(cat => sentimentMatches(s, cat));
+            })
+          : allRows;
 
       setStats(computeStats(filtered));
       setTimeline(computeTimeline(filtered, granularity));
@@ -68,17 +67,11 @@ export default function EstadistiquesPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  function setFilter<K extends keyof LocalFilters>(key: K, value: LocalFilters[K]) {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  }
-
-  function resetFilters() { setFilters({}); }
-
-  const colorBy = filters.sentimentMin !== undefined || filters.sentimentMax !== undefined ? 'sentiment' : 'count';
+  const colorBy = filters.sentiments.length > 0 ? 'sentiment' : 'count';
 
   return (
     <div className="space-y-6">
-      <FilterPanel filters={filters} onFilterChange={setFilter} onReset={resetFilters} />
+      <FilterPanel filters={filters} onChange={setFilters} onReset={() => setFilters(EMPTY_FILTERS)} />
 
       {/* Timeline */}
       <Card>

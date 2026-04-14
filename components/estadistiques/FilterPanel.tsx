@@ -3,16 +3,27 @@
 import React, { useEffect, useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { Select } from '@/components/ui/Select';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Button } from '@/components/ui/Button';
-import type { FilterState } from '@/types';
 import { supabase } from '@/lib/supabase';
 
-type LocalFilter = Pick<FilterState, 'barri' | 'canal' | 'clas1' | 'sentimentMin' | 'sentimentMax'>;
+export interface StatsFilters {
+  barris: string[];
+  canals: string[];
+  clas1s: string[];
+  sentiments: string[];
+}
+
+export const EMPTY_FILTERS: StatsFilters = {
+  barris: [],
+  canals: [],
+  clas1s: [],
+  sentiments: [],
+};
 
 interface Props {
-  filters: LocalFilter;
-  onFilterChange: <K extends keyof LocalFilter>(key: K, value: LocalFilter[K]) => void;
+  filters: StatsFilters;
+  onChange: (filters: StatsFilters) => void;
   onReset: () => void;
 }
 
@@ -22,18 +33,27 @@ interface Options {
   clas1s: string[];
 }
 
-export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
+const SENTIMENT_OPTIONS = [
+  { value: 'positiu', label: 'Positiu (≥ 6)' },
+  { value: 'neutre', label: 'Neutre (3.5 – 6)' },
+  { value: 'negatiu', label: 'Negatiu (< 3.5)' },
+];
+
+export function FilterPanel({ filters, onChange, onReset }: Props) {
   const [options, setOptions] = useState<Options>({ barris: [], canals: [], clas1s: [] });
 
   useEffect(() => {
     async function loadOptions() {
       try {
+        // Fetch without ordering to avoid clustering on early-alphabet values.
+        // Large limit ensures we see rows from all distinct values.
         const [barriRes, canalRes, clas1Res] = await Promise.all([
-          supabase.from('sac_messages').select('barri').not('barri', 'is', null).order('barri').limit(5000),
-          supabase.from('sac_messages').select('canal').not('canal', 'is', null).order('canal').limit(5000),
-          supabase.from('sac_messages').select('clas1').not('clas1', 'is', null).order('clas1').limit(5000),
+          supabase.from('sac_messages').select('barri').not('barri', 'is', null).limit(100000),
+          supabase.from('sac_messages').select('canal').not('canal', 'is', null).limit(100000),
+          supabase.from('sac_messages').select('clas1').not('clas1', 'is', null).limit(100000),
         ]);
-        const unique = <T,>(arr: T[]) => Array.from(new Set(arr));
+        const unique = (arr: string[]) =>
+          Array.from(new Set(arr)).sort((a, b) => a.localeCompare(b, 'ca'));
         setOptions({
           barris: unique((barriRes.data ?? []).map((r: { barri: string }) => r.barri).filter(Boolean)),
           canals: unique((canalRes.data ?? []).map((r: { canal: string }) => r.canal).filter(Boolean)),
@@ -44,8 +64,15 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
     loadOptions();
   }, []);
 
-  const activeCount = [filters.barri, filters.canal, filters.clas1, filters.sentimentMin, filters.sentimentMax]
-    .filter(v => v !== undefined && v !== null && v !== '').length;
+  const activeCount =
+    filters.barris.length +
+    filters.canals.length +
+    filters.clas1s.length +
+    filters.sentiments.length;
+
+  function set(key: keyof StatsFilters, values: string[]) {
+    onChange({ ...filters, [key]: values });
+  }
 
   return (
     <Card>
@@ -54,7 +81,9 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
           <Filter className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold text-foreground">Filtres</h3>
           {activeCount > 0 && (
-            <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">{activeCount}</span>
+            <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+              {activeCount}
+            </span>
           )}
         </div>
         {activeCount > 0 && (
@@ -64,50 +93,39 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <Select
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <MultiSelect
           label="Barri"
           placeholder="Tots els barris"
-          value={filters.barri ?? ''}
-          onChange={e => onFilterChange('barri', e.target.value || undefined)}
           options={options.barris.map(b => ({ value: b, label: b }))}
+          selected={filters.barris}
+          onChange={v => set('barris', v)}
         />
-        <Select
+        <MultiSelect
           label="Canal"
           placeholder="Tots els canals"
-          value={filters.canal ?? ''}
-          onChange={e => onFilterChange('canal', e.target.value || undefined)}
           options={options.canals.map(c => ({ value: c, label: c }))}
+          selected={filters.canals}
+          onChange={v => set('canals', v)}
         />
-        <Select
+        <MultiSelect
           label="Categoria"
           placeholder="Totes les categories"
-          value={filters.clas1 ?? ''}
-          onChange={e => onFilterChange('clas1', e.target.value || undefined)}
-          options={options.clas1s.map(c => ({ value: c, label: c.length > 30 ? c.slice(0, 30) + '\u2026' : c }))}
+          options={options.clas1s.map(c => ({
+            value: c,
+            label: c.length > 40 ? c.slice(0, 40) + '…' : c,
+          }))}
+          selected={filters.clas1s}
+          onChange={v => set('clas1s', v)}
         />
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground-1">Sentiment mínim</label>
-          <input
-            type="number"
-            min={0} max={10} step={0.5}
-            value={filters.sentimentMin ?? ''}
-            onChange={e => onFilterChange('sentimentMin', e.target.value ? parseFloat(e.target.value) : undefined)}
-            placeholder="0"
-            className="rounded-lg border border-layer-line bg-layer px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground-1">Sentiment màxim</label>
-          <input
-            type="number"
-            min={0} max={10} step={0.5}
-            value={filters.sentimentMax ?? ''}
-            onChange={e => onFilterChange('sentimentMax', e.target.value ? parseFloat(e.target.value) : undefined)}
-            placeholder="10"
-            className="rounded-lg border border-layer-line bg-layer px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
-          />
-        </div>
+        <MultiSelect
+          label="Sentiment"
+          placeholder="Tots els sentiments"
+          options={SENTIMENT_OPTIONS}
+          selected={filters.sentiments}
+          onChange={v => set('sentiments', v)}
+          searchable={false}
+        />
       </div>
     </Card>
   );
