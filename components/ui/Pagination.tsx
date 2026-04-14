@@ -31,20 +31,20 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
 
   return (
     <div className="flex items-center justify-between px-1 py-3">
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Mostrant {start}–{end} de {total.toLocaleString('ca-ES')} resultats
       </p>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 0}
-          className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 rounded-lg hover:bg-muted-hover disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
+          <ChevronLeft className="w-4 h-4 text-muted-foreground-1" />
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`e${i}`} className="px-2 text-gray-400">…</span>
+            <span key={`e${i}`} className="px-2 text-muted-foreground-2">…</span>
           ) : (
             <button
               key={p}
@@ -52,8 +52,8 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
               className={cn(
                 'min-w-[2rem] h-8 rounded-lg text-sm font-medium transition-colors',
                 p === page
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground-1 hover:bg-muted-hover'
               )}
             >
               {(p as number) + 1}
@@ -63,9 +63,9 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages - 1}
-          className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 rounded-lg hover:bg-muted-hover disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground-1" />
         </button>
       </div>
     </div>

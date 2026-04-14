@@ -9,35 +9,120 @@
 /* Leaflet */
 @import 'leaflet/dist/leaflet.css';
 
-/* ── Semantic design tokens (mirrors SAC-Demo / Preline CSS variable system) */
+/* ── Preline Pro semantic design tokens ──────────────────────────────────────
+   Replicates the CSS custom property system from Preline Pro v4's main.min.css.
+   Tailwind color utilities (bg-card, text-foreground, border-navbar-line, etc.)
+   are wired to these vars via tailwind.config.ts → theme.extend.colors.
+────────────────────────────────────────────────────────────────────────────── */
 :root {
   /* Typography */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --color-primary: #2563eb;
-  --color-primary-dark: #1d4ed8;
-  --color-primary-light: #dbeafe;
+  /* === PAGE BACKGROUNDS === */
+  --background-1: #f8fafc;        /* body / page background */
+  --background: #f8fafc;
+  --plain: #ffffff;               /* pure white surface */
 
-  /* Page / surface backgrounds */
-  --background-1: #f8fafc;       /* bg-background-1 — page background */
-  --background-2: #f1f5f9;       /* slightly darker surface */
-  --background-plain: #ffffff;   /* pure white surface */
+  /* === CARD / LAYER / SURFACE === */
+  --card: #ffffff;
+  --card-line: #e2e8f0;
+  --card-footer: #f8fafc;
+  --layer: #ffffff;               /* buttons, form controls */
+  --layer-line: #e2e8f0;
+  --layer-hover: #f9fafb;
+  --layer-focus: #f3f4f6;
+  --surface: #ffffff;             /* elevated surfaces */
+  --surface-hover: #f9fafb;
+  --surface-focus: #f3f4f6;
+  --surface-foreground: #374151;
 
-  /* Navbar / layer */
-  --navbar-bg: #ffffff;
-  --navbar-border: #e2e8f0;
-  --layer-bg: #ffffff;
-  --layer-hover: #f8fafc;
+  /* === NAVBAR === */
+  --navbar: #ffffff;
+  --navbar-line: #e2e8f0;
+  --navbar-divider: #e2e8f0;
+  --navbar-inverse: #1e293b;
+  --navbar-nav-active: #eff6ff;
+  --navbar-nav-hover: #f1f5f9;
+  --navbar-nav-focus: #e2e8f0;
+  --navbar-nav-foreground: #374151;
+  --navbar-nav-list-divider: #e2e8f0;
 
-  /* Text */
+  /* === SIDEBAR === */
+  --sidebar: #ffffff;
+  --sidebar-line: #e2e8f0;
+  --sidebar-divider: #f1f5f9;
+  --sidebar-nav-active: #eff6ff;
+  --sidebar-nav-hover: #f1f5f9;
+  --sidebar-nav-focus: #e2e8f0;
+  --sidebar-nav-foreground: #374151;
+  --sidebar-nav-list-divider: #e2e8f0;
+
+  /* === DROPDOWN === */
+  --dropdown: #ffffff;
+  --dropdown-line: #e2e8f0;
+  --dropdown-divider: #f1f5f9;
+  --dropdown-item-hover: #f8fafc;
+  --dropdown-item-focus: #f1f5f9;
+  --dropdown-item-active: #eff6ff;
+  --dropdown-item-foreground: #374151;
+
+  /* === SELECT === */
+  --select: #ffffff;
+  --select-1: #ffffff;
+  --select-line: #e2e8f0;
+  --select-item-hover: #f8fafc;
+  --select-item-focus: #f1f5f9;
+  --select-item-active: #eff6ff;
+  --select-item-foreground: #374151;
+
+  /* === TOOLTIP === */
+  --tooltip: #1e293b;
+  --tooltip-line: #334155;
+  --tooltip-foreground: #f8fafc;
+
+  /* === OVERLAY === */
+  --overlay: #ffffff;
+  --overlay-line: #e2e8f0;
+  --overlay-divider: #f1f5f9;
+
+  /* === TEXT / FOREGROUND === */
   --foreground: #0f172a;
-  --foreground-muted: #64748b;
-  --foreground-subtle: #94a3b8;
+  --foreground-inverse: #ffffff;
+  --muted-foreground: #64748b;
+  --muted-foreground-1: #64748b;
+  --muted-foreground-2: #94a3b8;
+  --layer-foreground: #374151;
+  --destructive: #dc2626;
+  --secondary-foreground: #374151;
 
-  /* Borders */
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
+  /* === INTERACTIVE STATES === */
+  --muted-hover: #f1f5f9;
+  --muted-focus: #e2e8f0;
+
+  /* === SCROLLBAR === */
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+
+  /* === PRIMARY BRAND === */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-focus: #1d4ed8;
+  --primary-checked: #2563eb;
+  --primary-foreground: #ffffff;
+  --primary-line: #2563eb;
+
+  /* === SECONDARY === */
+  --secondary: #f1f5f9;
+
+  /* === MISC === */
+  --switch: #94a3b8;
+  --chart-primary: #2563eb;
+  --foreground-fill: #0f172a;
+  --layer-fill: #e2e8f0;
+  --surface-1-fill: #f8fafc;
+  --line-3: #f1f5f9;
+  --line-inverse: #334155;
 }
 
 /* ── Neighbourhood pill labels (choropleth) ─────────────────────────────── */

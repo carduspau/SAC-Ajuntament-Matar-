@@ -19,8 +19,8 @@ export function Header() {
   const title = PAGE_TITLES[pathname] ?? 'SAC Dashboard';
 
   return (
-    <header className="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-30 shadow-navbar">
-      <h1 className="text-lg font-semibold text-slate-900">{title}</h1>
+    <header className="relative h-16 bg-navbar border-b border-navbar-line flex items-center justify-between px-6 shrink-0 z-30 shadow-xs">
+      <h1 className="text-lg font-semibold text-foreground">{title}</h1>
       <DateRangePicker />
     </header>
   );

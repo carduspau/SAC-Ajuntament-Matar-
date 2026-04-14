@@ -21,14 +21,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       data-font="sans"
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className="antialiased bg-slate-50">
+      <body className="antialiased bg-background-1">
         <PrelineInit />
         <DateRangeProvider>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
               <Header />
-              <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
+              <main className="flex-1 overflow-y-auto p-6 bg-background-1">
                 {children}
               </main>
             </div>
