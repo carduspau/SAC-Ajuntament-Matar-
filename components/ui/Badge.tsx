@@ -48,7 +48,7 @@ export function CanalBadge({ canal }: { canal: string | null | undefined }) {
     'Fotodenuncia': 'bg-orange-100 text-orange-700',
     'App': 'bg-purple-100 text-purple-700',
   };
-  const cls = canal ? (CANAL_COLORS[canal] ?? 'bg-gray-100 text-gray-600') : 'bg-gray-100 text-gray-600';
+  const cls = canal ? (CANAL_COLORS[canal] ?? 'bg-surface text-muted-foreground-1') : 'bg-surface text-muted-foreground-1';
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', cls)}>
       {canal ?? '—'}

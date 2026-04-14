@@ -15,9 +15,9 @@ export function ChatBot() {
         onClick={() => setOpen(v => !v)}
         className={cn(
           'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg',
-          'bg-blue-600 hover:bg-blue-700 text-white',
+          'bg-primary hover:bg-primary-hover text-primary-foreground',
           'flex items-center justify-center transition-all duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2',
+          'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2',
           open && 'scale-90'
         )}
         aria-label="Obrir xatbot"

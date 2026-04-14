@@ -38,9 +38,9 @@ function AlertRow({ alert }: { alert: SacMessage }) {
   const score = parseSentiment(alert.sentiment);
 
   return (
-    <div className="border border-slate-100 rounded-xl overflow-hidden">
+    <div className="border border-card-line rounded-xl overflow-hidden">
       <div
-        className="flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+        className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted-hover transition-colors"
         onClick={() => setOpen(v => !v)}
       >
         {/* Score badge */}
@@ -56,26 +56,26 @@ function AlertRow({ alert }: { alert: SacMessage }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-slate-800">{alert.barri ?? '—'}</span>
+            <span className="text-sm font-semibold text-foreground">{alert.barri ?? '—'}</span>
             {alert.clas1 && <Badge variant="info" className="text-xs">{alert.clas1}</Badge>}
             {alert.canal && <Badge variant="neutral" className="text-xs">{alert.canal}</Badge>}
-            <span className="text-xs text-slate-400 ml-auto">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</span>
+            <span className="text-xs text-muted-foreground-2 ml-auto">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</span>
           </div>
-          <p className="text-sm text-slate-600 line-clamp-2">{truncate(alert.message, 140)}</p>
+          <p className="text-sm text-muted-foreground-1 line-clamp-2">{truncate(alert.message, 140)}</p>
         </div>
 
-        <div className="shrink-0 text-slate-400">
+        <div className="shrink-0 text-muted-foreground-2">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </div>
 
       {open && alert.message && (
-        <div className="px-4 pb-4 pt-0 border-t border-slate-100 bg-slate-50">
-          <p className="text-sm text-slate-700 leading-relaxed">{alert.message}</p>
+        <div className="px-4 pb-4 pt-0 border-t border-card-line bg-background-1">
+          <p className="text-sm text-foreground leading-relaxed">{alert.message}</p>
           {alert.situation && (
-            <p className="text-xs text-slate-500 mt-2 italic">{alert.situation}</p>
+            <p className="text-xs text-muted-foreground mt-2 italic">{alert.situation}</p>
           )}
-          <div className="flex gap-3 mt-3 text-xs text-slate-400">
+          <div className="flex gap-3 mt-3 text-xs text-muted-foreground-2">
             {alert.ciutada && <span>Ciutadà: {alert.ciutada}</span>}
             {alert.clas2 && <span>· {alert.clas2}</span>}
             {alert.clas3 && <span>· {alert.clas3}</span>}
@@ -178,16 +178,16 @@ export default function AlertesPage() {
           <button
             key={tab.value}
             onClick={() => setFilter(tab.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`py-1.5 px-3 inline-flex items-center text-sm font-medium rounded-lg transition-colors focus:outline-none ${
               filter === tab.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary text-primary-foreground border border-primary-line'
+                : 'bg-layer border border-layer-line text-layer-foreground shadow-2xs hover:bg-layer-hover'
             }`}
           >
             {tab.label}
           </button>
         ))}
-        <span className="ml-auto text-sm text-slate-500">{filtered.length} alertes</span>
+        <span className="ml-auto text-sm text-muted-foreground">{filtered.length} alertes</span>
       </div>
 
       {/* Two-column: list + map */}
@@ -201,7 +201,7 @@ export default function AlertesPage() {
               <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
                 <span className="text-emerald-600 text-xl">✓</span>
               </div>
-              <p className="text-slate-500">No hi ha alertes amb aquests criteris</p>
+              <p className="text-muted-foreground">No hi ha alertes amb aquests criteris</p>
             </div>
           ) : (
             filtered.slice(0, 20).map(alert => (
@@ -212,7 +212,7 @@ export default function AlertesPage() {
 
         {/* Mini map */}
         <Card className="p-0 overflow-hidden">
-          <CardHeader className="px-4 py-3 border-b border-slate-100">
+          <CardHeader className="px-4 py-3 border-b border-card-line">
             <CardTitle className="flex items-center gap-2 text-sm">
               <MapPin className="w-4 h-4 text-red-500" />
               Localització de les alertes

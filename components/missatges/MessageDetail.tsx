@@ -14,9 +14,9 @@ interface Props {
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex gap-4 py-2 border-b border-gray-50">
-      <dt className="text-xs font-medium text-gray-500 w-28 shrink-0">{label}</dt>
-      <dd className="text-sm text-gray-900 flex-1">{value ?? '—'}</dd>
+    <div className="flex gap-4 py-2 border-b border-card-line">
+      <dt className="text-xs font-medium text-muted-foreground w-28 shrink-0">{label}</dt>
+      <dd className="text-sm text-foreground flex-1">{value ?? '—'}</dd>
     </div>
   );
 }
@@ -28,12 +28,12 @@ export function MessageDetail({ message, onClose }: Props) {
     <Modal open={!!message} onClose={onClose} title={`Missatge ${message.saved_id}`} size="lg">
       <div className="p-6 space-y-4">
         {/* Message text */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{message.message || '—'}</p>
+        <div className="bg-background-1 rounded-xl p-4">
+          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{message.message || '—'}</p>
         </div>
 
         {/* Metadata */}
-        <dl className="divide-y divide-gray-50">
+        <dl className="divide-y divide-card-line">
           <Row label="Referència" value={message.saved_id} />
           <Row label="Data" value={formatDate(message.data_inici)} />
           <Row label="Barri" value={message.barri} />

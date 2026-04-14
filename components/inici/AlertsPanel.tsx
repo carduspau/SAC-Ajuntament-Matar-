@@ -50,7 +50,7 @@ export function AlertsPanel() {
         </CardTitle>
         <Link
           href="/missatges"
-          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+          className="text-xs text-primary hover:text-primary-hover flex items-center gap-1 transition-colors"
         >
           Veure totes <ChevronRight className="w-3 h-3" />
         </Link>
@@ -65,7 +65,7 @@ export function AlertsPanel() {
           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-2">
             <span className="text-emerald-600 text-lg">✓</span>
           </div>
-          <p className="text-sm text-gray-500">No hi ha alertes crítiques en aquest període</p>
+          <p className="text-sm text-muted-foreground">No hi ha alertes crítiques en aquest període</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -81,11 +81,11 @@ export function AlertsPanel() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-gray-700">{alert.barri ?? '—'}</span>
-                    <span className="text-xs text-gray-400">·</span>
-                    <span className="text-xs text-gray-400">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</span>
+                    <span className="text-xs font-medium text-foreground">{alert.barri ?? '—'}</span>
+                    <span className="text-xs text-muted-foreground-2">·</span>
+                    <span className="text-xs text-muted-foreground-2">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</span>
                   </div>
-                  <p className="text-xs text-gray-600 line-clamp-2">{truncate(alert.message, 100)}</p>
+                  <p className="text-xs text-muted-foreground-1 line-clamp-2">{truncate(alert.message, 100)}</p>
                 </div>
               </div>
             );

@@ -43,18 +43,18 @@ export function ApiKeyDialog({ open, onClose }: ApiKeyDialogProps) {
           </p>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-gray-600">Clau API d'OpenAI (sk-...)</label>
+          <label className="text-xs font-medium text-muted-foreground-1">Clau API d'OpenAI (sk-...)</label>
           <div className="relative">
             <input
               type={show ? 'text' : 'password'}
               value={key}
               onChange={e => setKey(e.target.value)}
               placeholder="sk-proj-..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-lg border border-layer-line bg-layer px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
             />
             <button
               onClick={() => setShow(v => !v)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground-2 hover:text-foreground"
             >
               {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>

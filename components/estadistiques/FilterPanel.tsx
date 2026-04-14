@@ -51,10 +51,10 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <h3 className="text-sm font-semibold text-gray-700">Filtres</h3>
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground">Filtres</h3>
           {activeCount > 0 && (
-            <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">{activeCount}</span>
+            <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">{activeCount}</span>
           )}
         </div>
         {activeCount > 0 && (
@@ -87,25 +87,25 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
           options={options.clas1s.map(c => ({ value: c, label: c.length > 30 ? c.slice(0, 30) + '\u2026' : c }))}
         />
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Sentiment m\u00ednim</label>
+          <label className="text-xs font-medium text-muted-foreground-1">Sentiment mínim</label>
           <input
             type="number"
             min={0} max={10} step={0.5}
             value={filters.sentimentMin ?? ''}
             onChange={e => onFilterChange('sentimentMin', e.target.value ? parseFloat(e.target.value) : undefined)}
             placeholder="0"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="rounded-lg border border-layer-line bg-layer px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">Sentiment m\u00e0xim</label>
+          <label className="text-xs font-medium text-muted-foreground-1">Sentiment màxim</label>
           <input
             type="number"
             min={0} max={10} step={0.5}
             value={filters.sentimentMax ?? ''}
             onChange={e => onFilterChange('sentimentMax', e.target.value ? parseFloat(e.target.value) : undefined)}
             placeholder="10"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="rounded-lg border border-layer-line bg-layer px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
           />
         </div>
       </div>

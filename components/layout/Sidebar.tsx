@@ -38,13 +38,13 @@ export function Sidebar() {
         'flex items-center gap-3 px-5 py-5 border-b border-sidebar-line',
         collapsed && 'justify-center px-2'
       )}>
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0 shadow-sm">
-          <span className="text-white text-xs font-bold tracking-tight">SAC</span>
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-2xs">
+          <span className="text-primary-foreground text-xs font-bold tracking-tight">SAC</span>
         </div>
         {!collapsed && (
           <div>
-            <p className="text-sm font-semibold text-slate-900 leading-none">SAC</p>
-            <p className="text-xs text-slate-400 mt-0.5">Ajuntament Mataró</p>
+            <p className="text-sm font-semibold text-foreground leading-none">SAC</p>
+            <p className="text-xs text-muted-foreground-2 mt-0.5">Ajuntament Mataró</p>
           </div>
         )}
       </div>

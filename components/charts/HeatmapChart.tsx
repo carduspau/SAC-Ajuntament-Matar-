@@ -35,13 +35,13 @@ export function HeatmapChart({ data, loading }: Props) {
         {/* Hour labels */}
         <div className="flex ml-8 mb-1">
           {[0, 3, 6, 9, 12, 15, 18, 21].map(h => (
-            <div key={h} className="text-xs text-gray-400" style={{ width: `${100 / 8}%` }}>{HOURS[h]}</div>
+            <div key={h} className="text-xs text-muted-foreground-2" style={{ width: `${100 / 8}%` }}>{HOURS[h]}</div>
           ))}
         </div>
         {/* Grid */}
         {DAYS.map((day, dayIdx) => (
           <div key={day} className="flex items-center mb-0.5">
-            <div className="w-8 text-xs text-gray-500 shrink-0">{day}</div>
+            <div className="w-8 text-xs text-muted-foreground shrink-0">{day}</div>
             <div className="flex flex-1 gap-0.5">
               {HOURS.map((_, hourIdx) => {
                 const count = grid[`${dayIdx}_${hourIdx}`] ?? 0;
@@ -59,7 +59,7 @@ export function HeatmapChart({ data, loading }: Props) {
         ))}
         {/* Legend */}
         <div className="flex items-center gap-2 mt-2 ml-8">
-          <span className="text-xs text-gray-400">Menys</span>
+          <span className="text-xs text-muted-foreground">Menys</span>
           {[0, 0.25, 0.5, 0.75, 1].map(v => (
             <div
               key={v}
@@ -67,7 +67,7 @@ export function HeatmapChart({ data, loading }: Props) {
               style={{ backgroundColor: v === 0 ? '#f3f4f6' : `rgba(99,102,241,${0.15 + v * 0.85})` }}
             />
           ))}
-          <span className="text-xs text-gray-400">Més</span>
+          <span className="text-xs text-muted-foreground">Més</span>
         </div>
       </div>
     </div>

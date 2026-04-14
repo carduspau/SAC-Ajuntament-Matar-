@@ -75,7 +75,7 @@ export default function MissatgesPage() {
     }),
     col.accessor('clas1', {
       header: 'Categoria',
-      cell: info => <span className="text-xs text-gray-600">{info.getValue() ?? '—'}</span>,
+      cell: info => <span className="text-xs text-muted-foreground-1">{info.getValue() ?? '—'}</span>,
     }),
     col.accessor('sentiment', {
       header: 'Sent.',
@@ -86,7 +86,7 @@ export default function MissatgesPage() {
     col.accessor('message', {
       header: 'Missatge',
       cell: info => (
-        <span className="text-xs text-gray-600 line-clamp-1 max-w-[220px]">
+        <span className="text-xs text-muted-foreground-1 line-clamp-1 max-w-[220px]">
           {truncate(info.getValue(), 80)}
         </span>
       ),
@@ -173,12 +173,12 @@ export default function MissatgesPage() {
 
       {/* Table */}
       <Card padding={false}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-card-line">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-gray-700">Missatges</h2>
-            <span className="text-xs text-gray-400">{count.toLocaleString('ca-ES')} resultats</span>
+            <h2 className="text-sm font-semibold text-foreground">Missatges</h2>
+            <span className="text-xs text-muted-foreground-2">{count.toLocaleString('ca-ES')} resultats</span>
             {selectedCount > 0 && (
-              <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
                 {selectedCount} seleccionats
               </span>
             )}
@@ -194,25 +194,25 @@ export default function MissatgesPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-full divide-y divide-line-2">
             <thead>
               {table.getHeaderGroups().map(hg => (
-                <tr key={hg.id} className="border-b border-gray-100">
+                <tr key={hg.id}>
                   {hg.headers.map(header => (
                     <th
                       key={header.id}
-                      className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
+                      className="text-left px-3 py-3 text-xs font-medium text-muted-foreground-2 uppercase tracking-wide whitespace-nowrap"
                       style={{ width: header.getSize() }}
                     >
                       {header.column.getCanSort() ? (
                         <button
                           onClick={header.column.getToggleSortingHandler()}
-                          className="flex items-center gap-1 hover:text-gray-900"
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {header.column.getIsSorted() === 'asc' ? <ChevronUp className="w-3 h-3" /> :
                            header.column.getIsSorted() === 'desc' ? <ChevronDown className="w-3 h-3" /> :
-                           <ChevronsUpDown className="w-3 h-3 text-gray-300" />}
+                           <ChevronsUpDown className="w-3 h-3 text-muted-foreground-2" />}
                         </button>
                       ) : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
@@ -220,10 +220,10 @@ export default function MissatgesPage() {
                 </tr>
               ))}
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-line-2">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-50">
+                  <tr key={i}>
                     {Array.from({ length: 9 }).map((_, j) => (
                       <td key={j} className="px-3 py-3">
                         <Skeleton className="h-4 w-full" />
@@ -233,7 +233,7 @@ export default function MissatgesPage() {
                 ))
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-16 text-gray-400 text-sm">
+                  <td colSpan={9} className="text-center py-16 text-muted-foreground-2 text-sm">
                     No s'han trobat missatges amb els filtres actuals
                   </td>
                 </tr>
@@ -241,7 +241,7 @@ export default function MissatgesPage() {
                 table.getRowModel().rows.map(row => (
                   <tr
                     key={row.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer"
+                    className="hover:bg-muted-hover cursor-pointer transition-colors"
                     onClick={() => setSelected(row.original)}
                   >
                     {row.getVisibleCells().map(cell => (

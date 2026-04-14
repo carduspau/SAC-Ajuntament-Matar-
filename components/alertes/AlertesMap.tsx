@@ -55,9 +55,9 @@ export function AlertesMap({ alerts }: Props) {
           >
             <Popup>
               <div className="text-xs space-y-1">
-                <div className="font-semibold text-slate-800">{alert.barri ?? '—'}</div>
-                <div className="text-slate-500">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</div>
-                {alert.clas1 && <div className="text-slate-600">{alert.clas1}</div>}
+                <div className="font-semibold text-foreground">{alert.barri ?? '—'}</div>
+                <div className="text-muted-foreground">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</div>
+                {alert.clas1 && <div className="text-muted-foreground-1">{alert.clas1}</div>}
                 {score !== null && (
                   <div style={{ color }} className="font-bold">
                     Sentiment: {score.toFixed(1)}

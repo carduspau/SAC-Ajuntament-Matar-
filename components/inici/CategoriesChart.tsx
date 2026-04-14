@@ -27,7 +27,7 @@ export function CategoriesChart({ data, loading }: Props) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Tag className="w-4 h-4 text-blue-600" />
+          <Tag className="w-4 h-4 text-primary" />
           Categories principals
         </CardTitle>
       </CardHeader>
@@ -35,7 +35,7 @@ export function CategoriesChart({ data, loading }: Props) {
       {loading ? (
         <Skeleton className="h-48 w-full" />
       ) : top8.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-8">Sense dades</p>
+        <p className="text-sm text-muted-foreground-2 text-center py-8">Sense dades</p>
       ) : (
         <ResponsiveContainer width="100%" height={220}>
           <BarChart

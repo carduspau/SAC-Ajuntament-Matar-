@@ -135,22 +135,22 @@ export default function EstadistiquesPage() {
             <CardTitle>Resum per barri</CardTitle>
           </CardHeader>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="min-w-full divide-y divide-line-2 text-sm">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Barri</th>
-                  <th className="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Missatges</th>
-                  <th className="text-right py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Sent. mitjà</th>
-                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Top categoria</th>
+                <tr>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground-2 uppercase">Barri</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground-2 uppercase">Missatges</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground-2 uppercase">Sent. mitjà</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground-2 uppercase">Top categoria</th>
                 </tr>
               </thead>
-              <tbody>
-                {stats.by_barri.map((b, i) => (
-                  <tr key={b.barri} className={i % 2 === 0 ? 'bg-gray-50/50' : ''}>
-                    <td className="py-2 px-3 font-medium text-gray-900">{b.barri}</td>
-                    <td className="py-2 px-3 text-right text-gray-700">{b.count.toLocaleString('ca-ES')}</td>
-                    <td className="py-2 px-3 text-right text-gray-700">{b.avg_sentiment?.toFixed(2) ?? '—'}</td>
-                    <td className="py-2 px-3 text-gray-500 truncate max-w-[200px]">{b.top_category ?? '—'}</td>
+              <tbody className="divide-y divide-line-2">
+                {stats.by_barri.map((b) => (
+                  <tr key={b.barri} className="hover:bg-muted-hover transition-colors">
+                    <td className="py-2 px-3 font-medium text-foreground">{b.barri}</td>
+                    <td className="py-2 px-3 text-right text-muted-foreground-1">{b.count.toLocaleString('ca-ES')}</td>
+                    <td className="py-2 px-3 text-right text-muted-foreground-1">{b.avg_sentiment?.toFixed(2) ?? '—'}</td>
+                    <td className="py-2 px-3 text-muted-foreground truncate max-w-[200px]">{b.top_category ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>

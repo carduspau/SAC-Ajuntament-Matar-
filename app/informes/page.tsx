@@ -110,16 +110,16 @@ export default function InformesPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Títol de l'informe</label>
+              <label className="text-xs font-medium text-muted-foreground-1 mb-1 block">Títol de l'informe</label>
               <input
                 value={reportTitle}
                 onChange={e => setReportTitle(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-lg border border-layer-line bg-layer px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary"
               />
             </div>
 
             <div>
-              <p className="text-xs font-medium text-gray-600 mb-2">Seccions a incloure</p>
+              <p className="text-xs font-medium text-muted-foreground-1 mb-2">Seccions a incloure</p>
               <div className="space-y-2">
                 {(Object.keys(sections) as (keyof SectionConfig)[]).map(key => (
                   <label key={key} className="flex items-center gap-2 cursor-pointer">
@@ -127,15 +127,15 @@ export default function InformesPage() {
                       type="checkbox"
                       checked={sections[key]}
                       onChange={() => toggleSection(key)}
-                      className="rounded accent-blue-600"
+                      className="rounded accent-primary"
                     />
-                    <span className="text-sm text-gray-700">{SECTION_LABELS[key]}</span>
+                    <span className="text-sm text-muted-foreground-1">{SECTION_LABELS[key]}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="border-t border-gray-100 pt-4 space-y-2">
+            <div className="border-t border-card-line pt-4 space-y-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -172,19 +172,19 @@ export default function InformesPage() {
               { label: 'Alertes crítiques', value: stats?.critical_count?.toLocaleString('ca-ES') ?? '—' },
               { label: 'Barris actius', value: stats?.by_barri?.length?.toLocaleString('ca-ES') ?? '—' },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
-                <p className="text-xl font-bold text-gray-900">{value}</p>
+              <div key={label} className="bg-background-1 rounded-xl p-3 text-center border border-card-line">
+                <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                <p className="text-xl font-bold text-foreground">{value}</p>
               </div>
             ))}
           </div>
           {aiSummary && (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-semibold text-blue-700">Resum generat per IA</span>
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-xs font-semibold text-primary">Resum generat per IA</span>
               </div>
-              <p className="text-sm text-gray-700 leading-relaxed">{aiSummary}</p>
+              <p className="text-sm text-muted-foreground-1 leading-relaxed">{aiSummary}</p>
             </div>
           )}
         </Card>
@@ -302,8 +302,8 @@ export default function InformesPage() {
       </div>
 
       {/* Live preview indicator */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-        <p className="text-sm text-gray-500">La previsualització s'usa per generar el PDF. Fes clic a <strong>Exportar PDF</strong> per descarregar l'informe.</p>
+      <div className="bg-card border border-card-line rounded-xl p-4 text-center">
+        <p className="text-sm text-muted-foreground">La previsualització s'usa per generar el PDF. Fes clic a <strong>Exportar PDF</strong> per descarregar l'informe.</p>
       </div>
     </div>
   );

@@ -33,10 +33,10 @@ function formatBucket(bucket: string, granularity: TimelineGranularity = 'day'):
 const CustomTooltip = ({ active, payload, label, granularity }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-sm">
-      <p className="font-semibold text-gray-700 mb-1">{formatBucket(label, granularity)}</p>
+    <div className="bg-card border border-card-line rounded-xl shadow-xs px-4 py-3 text-sm">
+      <p className="font-semibold text-foreground mb-1">{formatBucket(label, granularity)}</p>
       {payload.map((p: any) => (
-        <p key={p.name} className="text-gray-600" style={{ color: p.color }}>
+        <p key={p.name} className="text-muted-foreground-1" style={{ color: p.color }}>
           {p.name}: <span className="font-semibold">{p.value}</span>
         </p>
       ))}

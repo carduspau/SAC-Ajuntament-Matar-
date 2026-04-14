@@ -121,7 +121,7 @@ export default function InicioPage() {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-700 mb-3">Accés ràpid</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground-1 mb-3">Accés ràpid</h2>
             <QuickNav />
           </div>
 
@@ -134,15 +134,15 @@ export default function InicioPage() {
               <div className="space-y-2">
                 {stats.by_barri.slice(0, 5).map((b, i) => (
                   <div key={b.barri} className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400 w-4">{i + 1}</span>
+                    <span className="text-xs text-muted-foreground-2 w-4">{i + 1}</span>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-700">{b.barri}</span>
-                        <span className="text-sm font-semibold text-slate-900">{b.count}</span>
+                        <span className="text-sm text-muted-foreground-1">{b.barri}</span>
+                        <span className="text-sm font-semibold text-foreground">{b.count}</span>
                       </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-muted-hover rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-500 rounded-full"
+                          className="h-full bg-primary rounded-full"
                           style={{ width: `${(b.count / stats.by_barri[0].count) * 100}%` }}
                         />
                       </div>

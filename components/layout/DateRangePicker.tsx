@@ -112,7 +112,7 @@ export function DateRangePicker() {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {/* Period pills */}
-      <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-0.5">
+      <div className="flex items-center bg-muted-hover rounded-lg p-1 gap-0.5">
         {PERIODS.map(p => (
           <button
             key={p.value}
@@ -120,8 +120,8 @@ export function DateRangePicker() {
             className={cn(
               'px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
               period === p.value
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-layer text-foreground shadow-2xs'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {p.label}
@@ -134,13 +134,13 @@ export function DateRangePicker() {
         <button
           onClick={openCalendar}
           className={cn(
-            'flex items-center gap-1.5 text-sm bg-white border rounded-lg px-3 py-2 transition-colors',
+            'flex items-center gap-1.5 text-sm bg-layer border rounded-lg px-3 py-2 transition-colors',
             calOpen
-              ? 'border-blue-400 text-slate-700 ring-2 ring-blue-100'
-              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              ? 'border-primary text-foreground ring-2 ring-primary/10'
+              : 'border-layer-line text-muted-foreground-1 hover:border-primary/40'
           )}
         >
-          <Calendar className="w-4 h-4 text-slate-400" />
+          <Calendar className="w-4 h-4 text-muted-foreground-2" />
           <span>
             {format(from, 'dd MMM yyyy', { locale: ca })}
             {' '}–{' '}
@@ -150,21 +150,21 @@ export function DateRangePicker() {
 
         {/* Calendar panel */}
         {calOpen && (
-          <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl border border-slate-200 shadow-xl p-4 w-72">
+          <div className="absolute top-full right-0 mt-2 z-50 bg-card rounded-xl border border-card-line shadow-xl p-4 w-72">
             {/* Month navigation */}
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => setCalMonth(m => subMonths(m, 1))}
-                className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-500"
+                className="p-1.5 rounded-lg hover:bg-muted-hover transition-colors text-muted-foreground"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm font-semibold text-slate-800 capitalize">
+              <span className="text-sm font-semibold text-foreground capitalize">
                 {format(calMonth, 'MMMM yyyy', { locale: ca })}
               </span>
               <button
                 onClick={() => setCalMonth(m => addMonths(m, 1))}
-                className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-500"
+                className="p-1.5 rounded-lg hover:bg-muted-hover transition-colors text-muted-foreground"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -173,7 +173,7 @@ export function DateRangePicker() {
             {/* Weekday headers */}
             <div className="grid grid-cols-7 mb-1">
               {WEEK_DAYS.map(d => (
-                <div key={d} className="text-center text-xs text-slate-400 font-medium py-1">
+                <div key={d} className="text-center text-xs text-muted-foreground-2 font-medium py-1">
                   {d}
                 </div>
               ))}
@@ -198,17 +198,17 @@ export function DateRangePicker() {
                     onMouseLeave={() => setHoverDate(null)}
                     className={cn(
                       'relative text-xs h-8 w-full flex items-center justify-center transition-colors',
-                      isSelected && 'text-white font-semibold',
-                      !isSelected && inRange && 'bg-blue-50 text-slate-700',
-                      !isSelected && !inRange && 'text-slate-700 hover:bg-slate-100',
-                      today && !isSelected && 'font-semibold text-blue-600'
+                      isSelected && 'text-primary-foreground font-semibold',
+                      !isSelected && inRange && 'bg-primary/10 text-foreground',
+                      !isSelected && !inRange && 'text-foreground hover:bg-muted-hover',
+                      today && !isSelected && 'font-semibold text-primary'
                     )}
                   >
                     <span
                       className={cn(
                         'w-7 h-7 flex items-center justify-center rounded-full',
-                        isSelected && 'bg-blue-600',
-                        today && !isSelected && 'ring-2 ring-blue-300 ring-offset-0'
+                        isSelected && 'bg-primary',
+                        today && !isSelected && 'ring-2 ring-primary/40 ring-offset-0'
                       )}
                     >
                       {format(day, 'd')}
@@ -219,7 +219,7 @@ export function DateRangePicker() {
             </div>
 
             {/* Selection hint */}
-            <p className="text-xs text-slate-400 mt-3 text-center">
+            <p className="text-xs text-muted-foreground-2 mt-3 text-center">
               {!tempStart
                 ? 'Selecciona la data d\'inici'
                 : !tempEnd
@@ -231,7 +231,7 @@ export function DateRangePicker() {
             <button
               onClick={applyRange}
               disabled={!canApply}
-              className="mt-3 w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="mt-3 w-full bg-primary text-primary-foreground rounded-lg py-2 text-sm font-medium hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Aplicar
             </button>

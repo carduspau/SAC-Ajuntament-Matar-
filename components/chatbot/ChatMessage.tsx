@@ -13,8 +13,8 @@ function InlineChatChart({ chart }: { chart: ChatChartData }) {
   const data = chart.data.slice(0, 8);
 
   return (
-    <div className="mt-3 bg-white rounded-xl border border-slate-200 p-3">
-      <p className="text-xs font-semibold text-slate-600 mb-2">{chart.title}</p>
+    <div className="mt-3 bg-card rounded-xl border border-card-line p-3">
+      <p className="text-xs font-semibold text-muted-foreground-1 mb-2">{chart.title}</p>
       <ResponsiveContainer width="100%" height={160}>
         {chart.type === 'pie' ? (
           <PieChart>
@@ -69,8 +69,8 @@ export function ChatMessage({ message }: { message: ChatMsgType }) {
         className={cn(
           'max-w-[90%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap',
           isUser
-            ? 'bg-blue-600 text-white rounded-br-sm'
-            : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+            ? 'bg-primary text-primary-foreground rounded-br-sm'
+            : 'bg-muted-hover text-foreground rounded-bl-sm'
         )}
       >
         {message.content}

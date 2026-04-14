@@ -53,7 +53,7 @@ export default function BarrisPage() {
             ]}
           />
         </div>
-        <div className="text-sm text-gray-500 pb-0.5">{filtered.length} barris</div>
+        <div className="text-sm text-muted-foreground pb-0.5">{filtered.length} barris</div>
       </div>
 
       {loading ? (
@@ -63,7 +63,7 @@ export default function BarrisPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-muted-foreground-2">
           No s'han trobat barris amb la cerca "{search}"
         </div>
       ) : (

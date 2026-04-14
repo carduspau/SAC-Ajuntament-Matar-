@@ -174,6 +174,13 @@ const config: Config = {
         chart: {
           primary: "var(--chart-primary)",
         },
+        // ── Line / Divider ─────────────────────────────────────────────────
+        // Used for table dividers: divide-y divide-line-2, border-t-line-3
+        line: {
+          2: "var(--line-2, #e2e8f0)",
+          3: "var(--line-3)",
+          inverse: "var(--line-inverse)",
+        },
       },
 
       fontFamily: {
