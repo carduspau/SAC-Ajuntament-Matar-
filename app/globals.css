@@ -1,5 +1,6 @@
-/* Google Fonts — Domine (serif headings/brand) + Inter (body) */
-@import url('https://fonts.googleapis.com/css2?family=Domine:wght@400..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* Google Fonts — Domine (serif, for brand/display accents only) */
+@import url('https://fonts.googleapis.com/css2?family=Domine:wght@400..700&display=swap');
+/* Geist Sans + Geist Mono are loaded via geist/font/* in app/layout.tsx (no network request) */
 
 @tailwind base;
 @tailwind components;
@@ -10,6 +11,10 @@
 
 /* ── Semantic design tokens (mirrors SAC-Demo / Preline CSS variable system) */
 :root {
+  /* Typography */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
   --color-primary: #2563eb;
   --color-primary-dark: #1d4ed8;
   --color-primary-light: #dbeafe;

@@ -35,11 +35,11 @@ export function Sidebar() {
         collapsed && 'justify-center px-2'
       )}>
         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0 shadow-sm">
-          <span className="text-white text-xs font-bold font-serif tracking-tight">SAC</span>
+          <span className="text-white text-xs font-bold tracking-tight">SAC</span>
         </div>
         {!collapsed && (
           <div>
-            <p className="text-sm font-semibold text-slate-900 leading-none font-serif">SAC</p>
+            <p className="text-sm font-semibold text-slate-900 leading-none">SAC</p>
             <p className="text-xs text-slate-400 mt-0.5">Ajuntament Mataró</p>
           </div>
         )}

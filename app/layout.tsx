@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { DateRangeProvider } from '@/context/DateRangeContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
@@ -13,7 +15,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ca" data-theme="theme-default" data-font="sans">
+    <html
+      lang="ca"
+      data-theme="theme-default"
+      data-font="sans"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+    >
       <body className="antialiased bg-slate-50">
         <PrelineInit />
         <DateRangeProvider>
