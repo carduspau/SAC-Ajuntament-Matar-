@@ -1,7 +1,12 @@
 'use client';
 
 import React from 'react';
-import { KpiCard } from '@/components/inici/KpiCard';
+import {
+  MissatgesCard,
+  SentimentCard,
+  AlertesCard,
+  CategoriesCard,
+} from '@/components/inici/SummaryCards';
 import { AlertsPanel } from '@/components/inici/AlertsPanel';
 import { QuickNav } from '@/components/inici/QuickNav';
 import { CategoriesChart } from '@/components/inici/CategoriesChart';
@@ -17,77 +22,30 @@ export default function InicioPage() {
   const { data: timeline, loading: timelineLoading } = useTimeline();
   const { granularity } = useDateRange();
 
-  const avgSent = stats?.avg_sentiment;
-  const criticalPct = stats
-    ? ((stats.critical_count / Math.max(stats.total, 1)) * 100).toFixed(1)
-    : null;
-
-  // Sparkline data derived from timeline
-  const sparklineCount    = timeline.map(d => d.count);
-  const sparklineSentiment = timeline
-    .filter(d => d.avg_sentiment !== null)
-    .map(d => d.avg_sentiment!);
+  const topLoading = statsLoading || timelineLoading;
 
   return (
     <div className="space-y-6">
-      {/* Primary KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Total missatges"
-          value={stats ? stats.total.toLocaleString('ca-ES') : '—'}
-          sub="Període seleccionat"
-          sparkline={sparklineCount}
+      {/* 4 Rich Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <MissatgesCard
+          stats={stats}
+          timeline={timeline}
+          loading={topLoading}
+          granularity={granularity}
+        />
+        <SentimentCard
+          stats={stats}
+          timeline={timeline}
+          loading={topLoading}
+          granularity={granularity}
+        />
+        <AlertesCard
+          stats={stats}
           loading={statsLoading}
         />
-        <KpiCard
-          label="Sentiment mitjà"
-          value={avgSent !== null && avgSent !== undefined ? avgSent.toFixed(2) : '—'}
-          sub="Escala de 0 a 10"
-          sparkline={sparklineSentiment}
-          variant={avgSent !== null && avgSent !== undefined && avgSent < 4 ? 'warning' : 'default'}
-          loading={statsLoading}
-        />
-        <KpiCard
-          label="Alertes crítiques"
-          value={stats ? stats.critical_count.toLocaleString('ca-ES') : '—'}
-          sub="Sentiment < 3.5"
-          variant={stats && stats.critical_count > 0 ? 'danger' : 'success'}
-          invertTrend
-          loading={statsLoading}
-        />
-        <KpiCard
-          label="Categoria principal"
-          value={stats?.by_clas1[0]?.category ?? '—'}
-          sub={stats?.by_clas1[0] ? `${stats.by_clas1[0].count.toLocaleString('ca-ES')} missatges` : undefined}
-          loading={statsLoading}
-        />
-      </div>
-
-      {/* Secondary KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Canal principal"
-          value={stats?.by_canal[0]?.canal ?? '—'}
-          sub={stats?.by_canal[0] ? `${stats.by_canal[0].count.toLocaleString('ca-ES')} missatges` : undefined}
-          loading={statsLoading}
-        />
-        <KpiCard
-          label="Barris actius"
-          value={stats ? stats.by_barri.length.toLocaleString('ca-ES') : '—'}
-          sub="Barris amb activitat"
-          loading={statsLoading}
-        />
-        <KpiCard
-          label="% Missatges crítics"
-          value={criticalPct !== null ? `${criticalPct}%` : '—'}
-          sub="Del total del període"
-          variant={criticalPct !== null && parseFloat(criticalPct) > 10 ? 'danger' : 'default'}
-          loading={statsLoading}
-        />
-        <KpiCard
-          label="Categories actives"
-          value={stats ? stats.by_clas1.length.toLocaleString('ca-ES') : '—'}
-          sub="Categories distintes"
+        <CategoriesCard
+          stats={stats}
           loading={statsLoading}
         />
       </div>
@@ -124,7 +82,7 @@ export default function InicioPage() {
           </div>
 
           {/* Top barris */}
-          {stats && stats.by_barri.length > 0 && (
+          {!statsLoading && stats && stats.by_barri.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Top barris</CardTitle>
