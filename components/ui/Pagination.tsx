@@ -52,7 +52,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
               className={cn(
                 'min-w-[2rem] h-8 rounded-lg text-sm font-medium transition-colors',
                 p === page
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               )}
             >

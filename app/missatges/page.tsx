@@ -178,7 +178,7 @@ export default function MissatgesPage() {
             <h2 className="text-sm font-semibold text-gray-700">Missatges</h2>
             <span className="text-xs text-gray-400">{count.toLocaleString('ca-ES')} resultats</span>
             {selectedCount > 0 && (
-              <span className="bg-indigo-100 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
                 {selectedCount} seleccionats
               </span>
             )}

@@ -95,7 +95,7 @@ export default function InicioPage() {
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-500 rounded-full"
+                          className="h-full bg-blue-500 rounded-full"
                           style={{ width: `${(b.count / stats.by_barri[0].count) * 100}%` }}
                         />
                       </div>

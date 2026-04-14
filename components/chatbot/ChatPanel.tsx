@@ -73,14 +73,14 @@ export function ChatPanel() {
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-indigo-600">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-blue-600">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5 text-white" />
           <span className="text-sm font-semibold text-white">Assistent SAC</span>
         </div>
         <button
           onClick={() => setShowSettings(true)}
-          className="p-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-blue-700 transition-colors"
           title="Configuració OpenAI"
         >
           <Settings className="w-4 h-4 text-white" />
@@ -109,13 +109,13 @@ export function ChatPanel() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder="Fes una pregunta..."
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
             disabled={loading}
           />
           <button
             onClick={sendMessage}
             disabled={loading || !input.trim()}
-            className="p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

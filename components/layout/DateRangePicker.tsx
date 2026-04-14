@@ -91,7 +91,7 @@ export function DateRangePicker() {
           </div>
           <button
             onClick={applyCustom}
-            className="bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-indigo-700"
+            className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700"
           >
             Aplicar
           </button>

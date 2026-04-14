@@ -54,7 +54,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
           <Filter className="w-4 h-4 text-gray-500" />
           <h3 className="text-sm font-semibold text-gray-700">Filtres</h3>
           {activeCount > 0 && (
-            <span className="bg-indigo-100 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full">{activeCount}</span>
+            <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">{activeCount}</span>
           )}
         </div>
         {activeCount > 0 && (
@@ -94,7 +94,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
             value={filters.sentimentMin ?? ''}
             onChange={e => onFilterChange('sentimentMin', e.target.value ? parseFloat(e.target.value) : undefined)}
             placeholder="0"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -105,7 +105,7 @@ export function FilterPanel({ filters, onFilterChange, onReset }: Props) {
             value={filters.sentimentMax ?? ''}
             onChange={e => onFilterChange('sentimentMax', e.target.value ? parseFloat(e.target.value) : undefined)}
             placeholder="10"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
         </div>
       </div>

@@ -50,7 +50,7 @@ export function ApiKeyDialog({ open, onClose }: ApiKeyDialogProps) {
               value={key}
               onChange={e => setKey(e.target.value)}
               placeholder="sk-proj-..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
             <button
               onClick={() => setShow(v => !v)}

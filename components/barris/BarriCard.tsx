@@ -56,7 +56,7 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
 
       <button
         onClick={() => setExpanded(v => !v)}
-        className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 transition-colors"
+        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
       >
         {expanded ? <><ChevronUp className="w-3 h-3" /> Menys detall</> : <><ChevronDown className="w-3 h-3" /> Veure evolució</>}
       </button>

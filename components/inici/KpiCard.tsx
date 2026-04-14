@@ -14,14 +14,14 @@ interface KpiCardProps {
 }
 
 const VARIANT_CLASSES = {
-  default: 'border-gray-200',
+  default: 'border-slate-200',
   danger: 'border-red-200 bg-red-50',
   warning: 'border-amber-200 bg-amber-50',
   success: 'border-emerald-200 bg-emerald-50',
 };
 
 const ICON_CLASSES = {
-  default: 'bg-indigo-100 text-indigo-600',
+  default: 'bg-blue-100 text-blue-600',
   danger: 'bg-red-100 text-red-600',
   warning: 'bg-amber-100 text-amber-600',
   success: 'bg-emerald-100 text-emerald-600',
@@ -30,7 +30,7 @@ const ICON_CLASSES = {
 export function KpiCard({ label, value, sub, icon, trend, variant = 'default', loading, onClick }: KpiCardProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
         <Skeleton className="h-4 w-24 mb-3" />
         <Skeleton className="h-8 w-16 mb-2" />
         <Skeleton className="h-3 w-32" />
@@ -48,7 +48,7 @@ export function KpiCard({ label, value, sub, icon, trend, variant = 'default', l
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
         {icon && (
           <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', ICON_CLASSES[variant])}>
             {icon}
@@ -56,8 +56,8 @@ export function KpiCard({ label, value, sub, icon, trend, variant = 'default', l
         )}
       </div>
       <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
       </div>
       {trend !== undefined && (
         <div className={cn('text-xs font-medium', trend >= 0 ? 'text-emerald-600' : 'text-red-600')}>

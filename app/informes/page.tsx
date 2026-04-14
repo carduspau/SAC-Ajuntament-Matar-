@@ -114,7 +114,7 @@ export default function InformesPage() {
               <input
                 value={reportTitle}
                 onChange={e => setReportTitle(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
@@ -127,7 +127,7 @@ export default function InformesPage() {
                       type="checkbox"
                       checked={sections[key]}
                       onChange={() => toggleSection(key)}
-                      className="rounded accent-indigo-600"
+                      className="rounded accent-blue-600"
                     />
                     <span className="text-sm text-gray-700">{SECTION_LABELS[key]}</span>
                   </label>
@@ -179,10 +179,10 @@ export default function InformesPage() {
             ))}
           </div>
           {aiSummary && (
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                <span className="text-xs font-semibold text-indigo-700">Resum generat per IA</span>
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-semibold text-blue-700">Resum generat per IA</span>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">{aiSummary}</p>
             </div>

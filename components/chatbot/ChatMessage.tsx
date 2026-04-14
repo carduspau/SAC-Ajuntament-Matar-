@@ -10,7 +10,7 @@ export function ChatMessage({ message }: { message: ChatMsgType }) {
         className={cn(
           'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap',
           isUser
-            ? 'bg-indigo-600 text-white rounded-br-sm'
+            ? 'bg-blue-600 text-white rounded-br-sm'
             : 'bg-gray-100 text-gray-800 rounded-bl-sm'
         )}
       >

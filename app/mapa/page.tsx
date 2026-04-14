@@ -98,7 +98,7 @@ export default function MapaPage() {
           <div className="flex items-center gap-3 ml-auto text-xs text-gray-500">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Crític</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Negatiu</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-indigo-400 inline-block" /> Neutral</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-400 inline-block" /> Neutral</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" /> Positiu</span>
           </div>
         )}
