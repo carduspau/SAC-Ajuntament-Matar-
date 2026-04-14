@@ -146,7 +146,7 @@ export default function AlertesPage() {
         <KpiCard
           label="Total alertes crítiques"
           value={loading ? '—' : totalCritical.toString()}
-          icon={<AlertTriangle className="w-4 h-4" />}
+          sub="Sentiment < 3.5"
           variant={totalCritical > 0 ? 'danger' : 'success'}
           loading={loading}
         />
@@ -154,20 +154,17 @@ export default function AlertesPage() {
           label="Sentiment mitjà crític"
           value={avgScore !== null ? avgScore.toFixed(2) : '—'}
           sub="Escala 0–10"
-          icon={<AlertTriangle className="w-4 h-4" />}
           variant="warning"
           loading={loading}
         />
         <KpiCard
           label="Barri més afectat"
           value={loading ? '—' : worstBarri}
-          icon={<MapPin className="w-4 h-4" />}
           loading={loading}
         />
         <KpiCard
           label="Canal principal"
           value={loading ? '—' : topCanal}
-          icon={<Radio className="w-4 h-4" />}
           loading={loading}
         />
       </div>
