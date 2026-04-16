@@ -2,22 +2,27 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { AlertTriangle, MapPin, Radio, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis,
+  ResponsiveContainer, Tooltip as RechartsTooltip,
+} from 'recharts';
+import { AlertTriangle, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { KpiCard } from '@/components/inici/KpiCard';
 import { supabase } from '@/lib/supabase';
 import { parseSentiment } from '@/lib/sentiment';
-import { formatDate, truncate } from '@/lib/utils';
-import type { SacMessage } from '@/types';
+import { formatDate, truncate, cn } from '@/lib/utils';
+import { computeTimeline } from '@/lib/aggregations';
+import { getCategoryColor } from '@/lib/categoryColors';
+import { useDateRange } from '@/context/DateRangeContext';
+import type { SacMessage, TimelineBucket, CategoryStat, TimelineGranularity } from '@/types';
+import { format, parseISO } from 'date-fns';
+import { ca } from 'date-fns/locale';
 
 const AlertesMapDynamic = dynamic(
   () => import('@/components/alertes/AlertesMap').then(m => ({ default: m.AlertesMap })),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="w-full h-full rounded-xl" />,
-  }
+  { ssr: false, loading: () => <Skeleton className="w-full h-full rounded-xl min-h-[200px]" /> }
 );
 
 type SeverityFilter = 'all' | 'critical' | 'very-critical';
@@ -28,9 +33,16 @@ const TABS: { value: SeverityFilter; label: string }[] = [
   { value: 'critical', label: 'Crític (2.5–3.5)' },
 ];
 
-function severityVariant(score: number | null): 'danger' | 'warning' {
-  if (score !== null && score < 2.5) return 'danger';
-  return 'warning';
+function formatBucket(bucket: string, granularity: TimelineGranularity): string {
+  try {
+    const d = bucket.includes('T') ? parseISO(bucket) : new Date(bucket + 'T00:00:00');
+    switch (granularity) {
+      case 'hour':  return format(d, 'HH:mm', { locale: ca });
+      case 'day':   return format(d, 'd MMM', { locale: ca });
+      case 'week':  return format(d, 'd MMM', { locale: ca });
+      case 'month': return format(d, 'MMM yy', { locale: ca });
+    }
+  } catch { return bucket; }
 }
 
 function AlertRow({ alert }: { alert: SacMessage }) {
@@ -43,7 +55,6 @@ function AlertRow({ alert }: { alert: SacMessage }) {
         className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted-hover transition-colors"
         onClick={() => setOpen(v => !v)}
       >
-        {/* Score badge */}
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
           score !== null && score < 2.5 ? 'bg-red-100' : 'bg-amber-100'
         }`}>
@@ -87,109 +98,291 @@ function AlertRow({ alert }: { alert: SacMessage }) {
 }
 
 export default function AlertesPage() {
-  const [alerts, setAlerts] = useState<SacMessage[]>([]);
+  const { from, to, granularity } = useDateRange();
+  const [allCritical, setAllCritical] = useState<SacMessage[]>([]);
+  const [timeline, setTimeline] = useState<TimelineBucket[]>([]);
+  const [byCategory, setByCategory] = useState<CategoryStat[]>([]);
+  const [avgSentiment, setAvgSentiment] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<SeverityFilter>('all');
 
-  const fetchAlerts = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await supabase
         .from('sac_messages')
         .select('*')
-        .order('sentiment', { ascending: true })
-        .limit(200);
+        .gte('data_inici', from.toISOString())
+        .lte('data_inici', to.toISOString())
+        .limit(2000);
 
-      const criticals = (data ?? []).filter((m: SacMessage) => {
+      const critical = (data ?? []).filter((m: SacMessage) => {
         const s = parseSentiment(m.sentiment);
         return s !== null && s < 3.5;
       });
-      setAlerts(criticals);
+
+      const tl = computeTimeline(critical, granularity);
+
+      const sentiments = critical
+        .map(m => parseSentiment(m.sentiment))
+        .filter((s): s is number => s !== null);
+      const avg = sentiments.length > 0
+        ? sentiments.reduce((a, b) => a + b, 0) / sentiments.length
+        : null;
+
+      const catMap = new Map<string, number>();
+      for (const m of critical) {
+        const cat = m.clas1 ?? 'Altres';
+        catMap.set(cat, (catMap.get(cat) ?? 0) + 1);
+      }
+      const cats = Array.from(catMap.entries())
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count);
+
+      setAllCritical(critical);
+      setTimeline(tl);
+      setAvgSentiment(avg);
+      setByCategory(cats);
     } catch {
-      setAlerts([]);
+      setAllCritical([]);
+      setTimeline([]);
+      setAvgSentiment(null);
+      setByCategory([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [from.toISOString(), to.toISOString(), granularity]);
 
-  useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const filtered = alerts.filter(a => {
+  const filtered = allCritical.filter(a => {
     const s = parseSentiment(a.sentiment);
     if (filter === 'very-critical') return s !== null && s < 2.5;
     if (filter === 'critical') return s !== null && s >= 2.5 && s < 3.5;
     return true;
   });
 
-  // KPI stats
-  const totalCritical = alerts.length;
-  const barriCounts = alerts.reduce<Record<string, number>>((acc, a) => {
-    const b = a.barri ?? 'Desconegut';
-    acc[b] = (acc[b] ?? 0) + 1;
-    return acc;
-  }, {});
-  const worstBarri = Object.entries(barriCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—';
-  const canalCounts = alerts.reduce<Record<string, number>>((acc, a) => {
-    const c = a.canal ?? 'Desconegut';
-    acc[c] = (acc[c] ?? 0) + 1;
-    return acc;
-  }, {});
-  const topCanal = Object.entries(canalCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—';
-  const avgScore = alerts.length > 0
-    ? alerts.reduce((s, a) => s + (parseSentiment(a.sentiment) ?? 0), 0) / alerts.length
-    : null;
+  const chartData = timeline.map(d => ({ b: d.bucket, v: d.count }));
+  const sentData = timeline.filter(d => d.avg_sentiment !== null).map(d => ({ b: d.bucket, v: d.avg_sentiment! }));
+
+  const sentCat =
+    avgSentiment === null  ? { label: '—',      accent: '#94a3b8', textCls: 'text-muted-foreground-2', badgeBg: 'bg-muted-hover' } :
+    avgSentiment >= 6      ? { label: 'Positiu', accent: '#10b981', textCls: 'text-emerald-600',        badgeBg: 'bg-emerald-50'  } :
+    avgSentiment >= 3.5    ? { label: 'Neutre',  accent: '#f59e0b', textCls: 'text-amber-500',          badgeBg: 'bg-amber-50'    } :
+                             { label: 'Negatiu', accent: '#ef4444', textCls: 'text-red-500',            badgeBg: 'bg-red-50'      };
+
+  const catData = byCategory.slice(0, 10).map(c => ({
+    category: c.category.length > 28 ? c.category.slice(0, 28) + '…' : c.category,
+    fullCategory: c.category,
+    count: c.count,
+  }));
 
   return (
     <div className="space-y-6">
-      {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Total alertes crítiques"
-          value={loading ? '—' : totalCritical.toString()}
-          sub="Sentiment < 3.5"
-          variant={totalCritical > 0 ? 'danger' : 'success'}
-          loading={loading}
-        />
-        <KpiCard
-          label="Sentiment mitjà crític"
-          value={avgScore !== null ? avgScore.toFixed(2) : '—'}
-          sub="Escala 0–10"
-          variant="warning"
-          loading={loading}
-        />
-        <KpiCard
-          label="Barri més afectat"
-          value={loading ? '—' : worstBarri}
-          loading={loading}
-        />
-        <KpiCard
-          label="Canal principal"
-          value={loading ? '—' : topCanal}
-          loading={loading}
-        />
+
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Left top: 2 mini cards */}
+        <div className="lg:col-span-2 lg:row-start-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          {/* Critical messages timeline card */}
+          <div className="bg-card border border-card-line rounded-2xl p-5 flex flex-col shadow-xs">
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground-2">Alertes crítiques</p>
+            </div>
+            {loading ? (
+              <>
+                <Skeleton className="h-10 w-24 mb-4" />
+                <Skeleton className="flex-1 w-full" style={{ minHeight: 80 }} />
+              </>
+            ) : (
+              <>
+                <p className="text-[2.4rem] font-extrabold tracking-tight text-red-600 leading-none mb-4">
+                  {allCritical.length.toLocaleString('ca-ES')}
+                </p>
+                {chartData.length >= 2 ? (
+                  <div className="flex-1 min-h-[80px] -mx-5">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                        <defs>
+                          <linearGradient id="grad-crit" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#ef4444" stopOpacity={0.22} />
+                            <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <RechartsTooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="bg-card border border-card-line rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
+                                <p className="text-muted-foreground-2 mb-0.5">{formatBucket((payload[0].payload as { b: string }).b, granularity)}</p>
+                                <p className="font-bold text-foreground">{payload[0].value as number} alertes</p>
+                              </div>
+                            );
+                          }}
+                          cursor={{ stroke: '#ef4444', strokeWidth: 1, strokeDasharray: '3 3' }}
+                        />
+                        <Area type="monotone" dataKey="v" stroke="#ef4444" strokeWidth={2} fill="url(#grad-crit)" dot={false} isAnimationActive={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="flex-1 min-h-[80px] flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground-2">Sense dades temporals</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Sentiment card */}
+          <div className="bg-card border border-card-line rounded-2xl p-5 flex flex-col shadow-xs">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sentCat.accent }} />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground-2">Sentiment crític</p>
+              </div>
+              {!loading && avgSentiment !== null && (
+                <span className={cn('text-xs font-semibold px-2 py-1 rounded-full shrink-0', sentCat.badgeBg, sentCat.textCls)}>
+                  {sentCat.label}
+                </span>
+              )}
+            </div>
+            {loading ? (
+              <>
+                <Skeleton className="h-10 w-28 mb-4" />
+                <Skeleton className="flex-1 w-full" style={{ minHeight: 60 }} />
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-1.5 mb-4">
+                  <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none">
+                    {avgSentiment !== null ? avgSentiment.toFixed(2) : '—'}
+                  </p>
+                  {avgSentiment !== null && (
+                    <span className="text-base font-medium text-muted-foreground-2">/10</span>
+                  )}
+                </div>
+                {sentData.length >= 2 ? (
+                  <div className="flex-1 min-h-[60px] -mx-5">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={sentData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+                        <defs>
+                          <linearGradient id="grad-sent-crit" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={sentCat.accent} stopOpacity={0.2} />
+                            <stop offset="100%" stopColor={sentCat.accent} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <RechartsTooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="bg-card border border-card-line rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
+                                <p className="text-muted-foreground-2 mb-0.5">{formatBucket((payload[0].payload as { b: string }).b, granularity)}</p>
+                                <p className="font-bold text-foreground">{(payload[0].value as number).toFixed(2)} / 10</p>
+                              </div>
+                            );
+                          }}
+                          cursor={{ stroke: sentCat.accent, strokeWidth: 1, strokeDasharray: '3 3' }}
+                        />
+                        <Area type="monotone" dataKey="v" stroke={sentCat.accent} strokeWidth={2} fill="url(#grad-sent-crit)" dot={false} isAnimationActive={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="flex-1 min-h-[60px]" />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Left bottom: categories bar chart */}
+        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Categories de les alertes crítiques</CardTitle>
+            </CardHeader>
+            {loading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : catData.length === 0 ? (
+              <p className="text-sm text-muted-foreground-2 text-center py-12">Sense dades</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(200, catData.length * 28 + 16)}>
+                <BarChart data={catData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    dataKey="category"
+                    type="category"
+                    width={200}
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }}
+                    formatter={(value: number) => [value.toLocaleString('ca-ES'), 'Alertes']}
+                  />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
+                    {catData.map((d, i) => (
+                      <Cell key={i} fill={getCategoryColor(d.fullCategory)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+        </div>
+
+        {/* Right: map spanning both left rows */}
+        <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2 flex flex-col">
+          <Card padding={false} className="overflow-hidden flex flex-col flex-1 min-h-[400px]">
+            <CardHeader className="px-4 py-3 border-b border-card-line shrink-0">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4 text-red-500" />
+                Localització de les alertes
+              </CardTitle>
+            </CardHeader>
+            <div className="flex-1 min-h-0">
+              {loading ? (
+                <Skeleton className="w-full h-full min-h-[360px]" />
+              ) : (
+                <AlertesMapDynamic alerts={filtered} />
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
 
-      {/* Severity filter tabs */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {TABS.map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => setFilter(tab.value)}
-            className={`py-1.5 px-3 inline-flex items-center text-sm font-medium rounded-lg transition-colors focus:outline-none ${
-              filter === tab.value
-                ? 'bg-primary text-primary-foreground border border-primary-line'
-                : 'bg-layer border border-layer-line text-layer-foreground shadow-2xs hover:bg-layer-hover'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-        <span className="ml-auto text-sm text-muted-foreground">{filtered.length} alertes</span>
-      </div>
-
-      {/* Two-column: list + map */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Alerts list */}
+      {/* Full-width alert list */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3 w-full">
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              Llistat d'alertes
+            </CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              {TABS.map(tab => (
+                <button
+                  key={tab.value}
+                  onClick={() => setFilter(tab.value)}
+                  className={cn(
+                    'py-1.5 px-3 inline-flex items-center text-sm font-medium rounded-lg transition-colors',
+                    filter === tab.value
+                      ? 'bg-primary text-primary-foreground border border-primary-line'
+                      : 'bg-layer border border-layer-line text-layer-foreground shadow-2xs hover:bg-layer-hover'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+              <span className="text-sm text-muted-foreground">{filtered.length} alertes</span>
+            </div>
+          </div>
+        </CardHeader>
         <div className="space-y-3">
           {loading ? (
             [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20 w-full" />)
@@ -201,29 +394,12 @@ export default function AlertesPage() {
               <p className="text-muted-foreground">No hi ha alertes amb aquests criteris</p>
             </div>
           ) : (
-            filtered.slice(0, 20).map(alert => (
+            filtered.slice(0, 30).map(alert => (
               <AlertRow key={alert.id} alert={alert} />
             ))
           )}
         </div>
-
-        {/* Mini map */}
-        <Card className="p-0 overflow-hidden">
-          <CardHeader className="px-4 py-3 border-b border-card-line">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <MapPin className="w-4 h-4 text-red-500" />
-              Localització de les alertes
-            </CardTitle>
-          </CardHeader>
-          <div className="h-96 lg:h-full min-h-80">
-            {loading ? (
-              <Skeleton className="w-full h-full" />
-            ) : (
-              <AlertesMapDynamic alerts={filtered} />
-            )}
-          </div>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }

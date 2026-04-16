@@ -8,17 +8,13 @@ import {
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Tag } from 'lucide-react';
+import { getCategoryColor } from '@/lib/categoryColors';
 import type { CategoryStat } from '@/types';
 
 interface Props {
   data: CategoryStat[];
   loading?: boolean;
 }
-
-const BLUE_SHADES = [
-  '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa',
-  '#93c5fd', '#bfdbfe', '#dbeafe', '#eff6ff',
-];
 
 export function CategoriesChart({ data, loading }: Props) {
   const top8 = data.slice(0, 8);
@@ -57,8 +53,8 @@ export function CategoriesChart({ data, loading }: Props) {
               formatter={(value: number) => [value.toLocaleString('ca-ES'), 'Missatges']}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
-              {top8.map((_, i) => (
-                <Cell key={i} fill={BLUE_SHADES[i % BLUE_SHADES.length]} />
+              {top8.map((entry, i) => (
+                <Cell key={i} fill={getCategoryColor(entry.category)} />
               ))}
             </Bar>
           </BarChart>

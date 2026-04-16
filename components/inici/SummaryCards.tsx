@@ -8,6 +8,7 @@ import {
 import { AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
+import { getCategoryColor } from '@/lib/categoryColors';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ca } from 'date-fns/locale';
 import type { StatsResponse, TimelineBucket, TimelineGranularity } from '@/types';
@@ -416,8 +417,6 @@ interface CategoriesCardProps {
   loading: boolean;
 }
 
-const CATEGORY_COLORS = ['#2563eb', '#7c3aed', '#0891b2', '#059669', '#d97706'];
-
 export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
   if (loading) {
     return (
@@ -472,7 +471,7 @@ export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
                 <div className="flex items-center gap-1.5 min-w-0 mr-2">
                   <span
                     className="text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 text-white"
-                    style={{ backgroundColor: CATEGORY_COLORS[i] }}
+                    style={{ backgroundColor: getCategoryColor(cat.category) }}
                   >
                     {i + 1}
                   </span>
@@ -485,7 +484,7 @@ export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
               <div className="h-1.5 bg-muted-hover rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%`, backgroundColor: CATEGORY_COLORS[i] }}
+                  style={{ width: `${pct}%`, backgroundColor: getCategoryColor(cat.category) }}
                 />
               </div>
             </div>

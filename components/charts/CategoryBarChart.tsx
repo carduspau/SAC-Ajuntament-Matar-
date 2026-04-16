@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { getCategoryColor } from '@/lib/categoryColors';
 import type { CategoryStat } from '@/types';
 
 interface Props {
@@ -17,6 +18,7 @@ export function CategoryBarChart({ data, loading, height = 300, maxItems = 10 }:
 
   const sliced = data.slice(0, maxItems).map(d => ({
     category: d.category.length > 28 ? d.category.slice(0, 28) + '…' : d.category,
+    fullCategory: d.category,
     Missatges: d.count,
   }));
 
@@ -37,7 +39,11 @@ export function CategoryBarChart({ data, loading, height = 300, maxItems = 10 }:
           cursor={{ fill: 'rgba(0,0,0,0.04)' }}
           contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13 }}
         />
-        <Bar dataKey="Missatges" fill="#6366f1" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="Missatges" radius={[0, 4, 4, 0]}>
+          {sliced.map((d, i) => (
+            <Cell key={i} fill={getCategoryColor(d.fullCategory)} />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
