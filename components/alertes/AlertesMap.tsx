@@ -1,9 +1,20 @@
 'use client';
 
-import React from 'react';
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet';
 import type { SacMessage } from '@/types';
 import { parseSentiment } from '@/lib/sentiment';
+
+function SizeInvalidator() {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 0);
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(map.getContainer());
+    return () => { clearTimeout(t); ro.disconnect(); };
+  }, [map]);
+  return null;
+}
 
 interface Props {
   alerts: SacMessage[];
@@ -34,6 +45,7 @@ export function AlertesMap({ alerts, onSelect }: Props) {
       zoomControl={true}
       scrollWheelZoom={false}
     >
+      <SizeInvalidator />
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'

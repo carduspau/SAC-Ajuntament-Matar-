@@ -1,8 +1,20 @@
 'use client';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet';
 import { parseSentiment } from '@/lib/sentiment';
 import type { SacMessage } from '@/types';
+
+function SizeInvalidator() {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 0);
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(map.getContainer());
+    return () => { clearTimeout(t); ro.disconnect(); };
+  }, [map]);
+  return null;
+}
 
 const MATARO: [number, number] = [41.5381, 2.4449];
 
@@ -19,6 +31,7 @@ export function CriticalAlertsSectionMap({ points, onSelect }: Props) {
       scrollWheelZoom={false}
       style={{ height: '100%', width: '100%' }}
     >
+      <SizeInvalidator />
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
