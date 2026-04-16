@@ -13,6 +13,14 @@ export interface SacMessage {
   lat: number | null;
   barri: string | null;
   data_inici: string | null;
+  // Camps inferits amb lògica SQL / IA
+  intent: string | null;
+  department: string | null;
+  action_required: string | null;
+  location_extracted: string | null;
+  followup_needed: boolean | null;
+  language: string | null;
+  citizen_experience_signal: string | null;
 }
 
 export type PeriodType = 'day' | 'week' | 'month' | 'year' | 'custom';
