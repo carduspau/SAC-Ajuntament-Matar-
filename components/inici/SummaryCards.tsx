@@ -6,7 +6,7 @@ import {
   AreaChart, Area, ResponsiveContainer,
   Tooltip as RechartsTooltip,
 } from 'recharts';
-import { AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
@@ -17,17 +17,23 @@ import type { StatsResponse, TimelineBucket, TimelineGranularity } from '@/types
 
 function CardShell({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('bg-card border border-card-line rounded-2xl p-5 flex flex-col', className)}>
+    <div className={cn(
+      'bg-card border border-card-line rounded-2xl p-5 flex flex-col shadow-xs',
+      className,
+    )}>
       {children}
     </div>
   );
 }
 
-function CardLabel({ children }: { children: React.ReactNode }) {
+function CardLabel({ children, accent }: { children: React.ReactNode; accent?: string }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground-2 mb-3">
-      {children}
-    </p>
+    <div className="flex items-center gap-1.5 mb-3">
+      {accent && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: accent }} />}
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground-2">
+        {children}
+      </p>
+    </div>
   );
 }
 
@@ -59,8 +65,8 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
     return (
       <CardShell className="gap-0">
         <Skeleton className="h-3 w-28 mb-3" />
-        <Skeleton className="h-10 w-24 mb-5" />
-        <Skeleton className="h-16 w-full mb-2" />
+        <Skeleton className="h-10 w-24 mb-6" />
+        <Skeleton className="h-20 w-full mb-2" />
         <Skeleton className="h-3 w-full" />
       </CardShell>
     );
@@ -72,41 +78,66 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
 
   const dayCount = differenceInCalendarDays(to, from) + 1;
   const dailyAvg = dayCount > 0 ? Math.round(total / dayCount) : 0;
-  const peakBucket   = timeline.length > 0
+  const peakBucket = timeline.length > 0
     ? timeline.reduce((best, d) => d.count > best.count ? d : best)
     : null;
+
+  // Trend: compare first half avg vs second half avg
+  let trendPct: number | null = null;
+  if (hasTrend && timeline.length >= 4) {
+    const mid = Math.floor(timeline.length / 2);
+    const firstHalf = timeline.slice(0, mid).reduce((s, d) => s + d.count, 0) / mid;
+    const secondHalf = timeline.slice(mid).reduce((s, d) => s + d.count, 0) / (timeline.length - mid);
+    if (firstHalf > 0) trendPct = Math.round(((secondHalf - firstHalf) / firstHalf) * 100);
+  }
 
   const firstLabel = hasTrend ? formatBucketShort(timeline[0].bucket, granularity) : '';
   const lastLabel  = hasTrend ? formatBucketShort(timeline[timeline.length - 1].bucket, granularity) : '';
 
   return (
     <CardShell className="gap-0">
-      <CardLabel>Total missatges</CardLabel>
+      <div className="flex items-start justify-between mb-3">
+        <CardLabel accent="#2563eb">Total missatges</CardLabel>
+        {trendPct !== null && (
+          <span className={cn(
+            'inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md',
+            trendPct >= 0
+              ? 'bg-emerald-50 text-emerald-600'
+              : 'bg-red-50 text-red-500',
+          )}>
+            {trendPct >= 0
+              ? <TrendingUp className="w-2.5 h-2.5" />
+              : <TrendingDown className="w-2.5 h-2.5" />}
+            {Math.abs(trendPct)}%
+          </span>
+        )}
+      </div>
 
       {/* Big number */}
-      <p className="text-[2.2rem] font-bold tracking-tight text-foreground leading-none mb-5">
+      <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none mb-5">
         {total.toLocaleString('ca-ES')}
       </p>
 
       {/* Full-bleed area chart */}
       {hasTrend ? (
         <div className="-mx-5">
-          <ResponsiveContainer width="100%" height={68}>
+          <ResponsiveContainer width="100%" height={88}>
             <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="sc-grad-msg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor="#2563eb" stopOpacity={0.18} />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0}    />
+                  <stop offset="0%"   stopColor="#2563eb" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0}   />
                 </linearGradient>
               </defs>
               <RechartsTooltip
-                contentStyle={{ display: 'none' }}
-                cursor={{ stroke: '#2563eb', strokeWidth: 1, strokeDasharray: '3 3' }}
+                contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 11, padding: '4px 10px' }}
+                formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                labelFormatter={() => ''}
               />
               <Area
                 dataKey="v"
                 stroke="#2563eb"
-                strokeWidth={1.5}
+                strokeWidth={2}
                 fill="url(#sc-grad-msg)"
                 dot={false}
                 isAnimationActive={false}
@@ -119,7 +150,7 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
           </div>
         </div>
       ) : (
-        <div className="h-16 mb-4 flex items-center justify-center">
+        <div className="h-20 mb-4 flex items-center justify-center">
           <span className="text-xs text-muted-foreground-2">Sense dades temporals</span>
         </div>
       )}
@@ -127,19 +158,19 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
       {/* Footer stats */}
       <div className="flex items-stretch gap-0 pt-4 border-t border-card-line">
         <div className="flex-1">
-          <p className="text-[10px] text-muted-foreground-2 mb-0.5">Mitjana diaria</p>
+          <p className="text-[10px] text-muted-foreground-2 mb-1">Mitjana diaria</p>
           <p className="text-sm font-bold text-foreground">{dailyAvg.toLocaleString('ca-ES')}</p>
         </div>
         {peakBucket && (
           <>
             <div className="w-px bg-card-line mx-3" />
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground-2 mb-0.5">Pic</p>
+              <p className="text-[10px] text-muted-foreground-2 mb-1">Pic</p>
               <p className="text-sm font-bold text-foreground">{peakBucket.count.toLocaleString('ca-ES')}</p>
             </div>
             <div className="w-px bg-card-line mx-3" />
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground-2 mb-0.5">Data del pic</p>
+              <p className="text-[10px] text-muted-foreground-2 mb-1">Data del pic</p>
               <p className="text-sm font-bold text-foreground">{formatBucketShort(peakBucket.bucket, granularity)}</p>
             </div>
           </>
@@ -158,15 +189,16 @@ interface SentimentCardProps {
   granularity: TimelineGranularity;
 }
 
-export function SentimentCard({ stats, timeline, loading, granularity }: SentimentCardProps) {
+export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) {
   if (loading) {
     return (
       <CardShell className="gap-0">
         <Skeleton className="h-3 w-24 mb-3" />
         <div className="flex items-center gap-3 mb-5">
-          <Skeleton className="h-10 w-16" />
+          <Skeleton className="h-10 w-20" />
           <Skeleton className="h-6 w-16 rounded-full" />
         </div>
+        <Skeleton className="h-14 w-full mb-4 rounded-xl" />
         <div className="space-y-3">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-4 w-full" />)}
         </div>
@@ -176,14 +208,12 @@ export function SentimentCard({ stats, timeline, loading, granularity }: Sentime
 
   const avg = stats?.avg_sentiment ?? null;
 
-  // Category label + colors
   const sentCat =
-    avg === null       ? { label: '—',       textCls: 'text-muted-foreground-2', bgCls: 'bg-muted-hover' } :
-    avg >= 6           ? { label: 'Positiu',  textCls: 'text-emerald-600',        bgCls: 'bg-emerald-50'  } :
-    avg >= 3.5         ? { label: 'Neutre',   textCls: 'text-amber-500',          bgCls: 'bg-amber-50'    } :
-                         { label: 'Negatiu',  textCls: 'text-red-500',            bgCls: 'bg-red-50'      };
+    avg === null ? { label: '—',       textCls: 'text-muted-foreground-2', bgCls: 'bg-muted-hover',  accent: '#94a3b8' } :
+    avg >= 6     ? { label: 'Positiu',  textCls: 'text-emerald-600',        bgCls: 'bg-emerald-50',   accent: '#10b981' } :
+    avg >= 3.5   ? { label: 'Neutre',   textCls: 'text-amber-500',          bgCls: 'bg-amber-50',     accent: '#f59e0b' } :
+                   { label: 'Negatiu',  textCls: 'text-red-500',            bgCls: 'bg-red-50',       accent: '#ef4444' };
 
-  // 3-way breakdown from distribution buckets (each bucket = 1 point range)
   const dist = stats?.sentiment_distribution ?? [];
   const negatiu = dist.filter(d => ['0–1','1–2','2–3','3–4'].includes(d.range)).reduce((s, d) => s + d.count, 0);
   const neutre  = dist.filter(d => ['4–5','5–6'].includes(d.range)).reduce((s, d) => s + d.count, 0);
@@ -191,29 +221,27 @@ export function SentimentCard({ stats, timeline, loading, granularity }: Sentime
   const distTotal = negatiu + neutre + positiu || 1;
 
   const bars = [
-    { label: 'Positiu', count: positiu, pct: (positiu / distTotal) * 100, bar: 'bg-emerald-500', txt: 'text-emerald-600' },
-    { label: 'Neutre',  count: neutre,  pct: (neutre  / distTotal) * 100, bar: 'bg-amber-400',  txt: 'text-amber-500'  },
-    { label: 'Negatiu', count: negatiu, pct: (negatiu / distTotal) * 100, bar: 'bg-red-400',    txt: 'text-red-500'    },
+    { label: 'Positiu', count: positiu, pct: (positiu / distTotal) * 100, barColor: '#10b981', txt: 'text-emerald-600' },
+    { label: 'Neutre',  count: neutre,  pct: (neutre  / distTotal) * 100, barColor: '#f59e0b', txt: 'text-amber-500'  },
+    { label: 'Negatiu', count: negatiu, pct: (negatiu / distTotal) * 100, barColor: '#ef4444', txt: 'text-red-500'    },
   ];
 
-  // Sentiment area chart (trend over time)
   const sentChartData = timeline
     .filter(d => d.avg_sentiment !== null)
     .map(d => ({ v: d.avg_sentiment! }));
-
   const hasTrend = sentChartData.length >= 2;
-  const sentColor = avg !== null ? (avg >= 6 ? '#10b981' : avg >= 3.5 ? '#f59e0b' : '#ef4444') : '#94a3b8';
+  const sentColor = sentCat.accent;
 
   return (
     <CardShell className="gap-0">
-      <CardLabel>Sentiment del període</CardLabel>
+      <CardLabel accent={sentCat.accent}>Sentiment del període</CardLabel>
 
-      {/* Score + category badge */}
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-[2.2rem] font-bold tracking-tight text-foreground leading-none">
+      {/* Score row with tinted background */}
+      <div className={cn('flex items-center justify-between rounded-xl px-3 py-2.5 mb-4', sentCat.bgCls)}>
+        <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none">
           {avg !== null ? avg.toFixed(2) : '—'}
         </p>
-        <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full', sentCat.bgCls, sentCat.textCls)}>
+        <span className={cn('text-sm font-bold', sentCat.textCls)}>
           {sentCat.label}
         </span>
       </div>
@@ -221,18 +249,18 @@ export function SentimentCard({ stats, timeline, loading, granularity }: Sentime
       {/* Mini trend sparkline */}
       {hasTrend && (
         <div className="-mx-5 mb-4">
-          <ResponsiveContainer width="100%" height={44}>
+          <ResponsiveContainer width="100%" height={52}>
             <AreaChart data={sentChartData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="sc-grad-sent" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={sentColor} stopOpacity={0.15} />
+                  <stop offset="0%"   stopColor={sentColor} stopOpacity={0.18} />
                   <stop offset="100%" stopColor={sentColor} stopOpacity={0}    />
                 </linearGradient>
               </defs>
               <Area
                 dataKey="v"
                 stroke={sentColor}
-                strokeWidth={1.5}
+                strokeWidth={2}
                 fill="url(#sc-grad-sent)"
                 dot={false}
                 isAnimationActive={false}
@@ -249,18 +277,18 @@ export function SentimentCard({ stats, timeline, loading, granularity }: Sentime
             <span className="text-xs text-muted-foreground-1 w-14 shrink-0">{b.label}</span>
             <div className="flex-1 h-1.5 bg-muted-hover rounded-full overflow-hidden">
               <div
-                className={cn('h-full rounded-full transition-all duration-500', b.bar)}
-                style={{ width: `${b.pct}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${b.pct}%`, backgroundColor: b.barColor }}
               />
             </div>
-            <span className={cn('text-xs font-semibold w-8 text-right', b.txt)}>
+            <span className={cn('text-xs font-semibold w-8 text-right tabular-nums', b.txt)}>
               {b.pct.toFixed(0)}%
             </span>
           </div>
         ))}
       </div>
 
-      <div className="flex justify-between mt-3 text-[10px] text-muted-foreground-2">
+      <div className="flex justify-between mt-2.5 text-[10px] text-muted-foreground-2 tabular-nums">
         <span>{positiu.toLocaleString('ca-ES')} positius</span>
         <span>{negatiu.toLocaleString('ca-ES')} negatius</span>
       </div>
@@ -280,9 +308,9 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
     return (
       <CardShell className="gap-0">
         <Skeleton className="h-3 w-32 mb-3" />
-        <Skeleton className="h-10 w-14 mb-5" />
+        <Skeleton className="h-14 w-full rounded-xl mb-5" />
         <div className="space-y-2">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-9 w-full rounded-lg" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-9 w-full rounded-xl" />)}
         </div>
       </CardShell>
     );
@@ -293,40 +321,58 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
     .filter(b => b.critical_count > 0)
     .sort((a, b) => (a.avg_sentiment ?? 10) - (b.avg_sentiment ?? 10))
     .slice(0, 4);
+  const barrisCount = criticalBarris.length;
+
+  const isOk = criticalCount === 0;
 
   return (
     <CardShell className="gap-0">
-      <div className="flex items-center justify-between mb-3">
-        <CardLabel>Alertes crítiques</CardLabel>
-        {criticalCount > 0 && <AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
+      <div className="flex items-start justify-between mb-3">
+        <CardLabel accent={isOk ? '#10b981' : '#ef4444'}>Alertes crítiques</CardLabel>
+        {!isOk && <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />}
       </div>
 
-      {/* Count */}
-      <div className="flex items-baseline gap-2 mb-5">
-        <p className={cn(
-          'text-[2.2rem] font-bold tracking-tight leading-none',
-          criticalCount > 0 ? 'text-red-600' : 'text-emerald-600'
-        )}>
-          {criticalCount.toLocaleString('ca-ES')}
-        </p>
-        <span className="text-xs text-muted-foreground">missatges</span>
+      {/* Count block */}
+      <div className={cn(
+        'rounded-xl px-3 py-2.5 mb-5 flex items-center justify-between',
+        isOk ? 'bg-emerald-50' : 'bg-red-50',
+      )}>
+        <div>
+          <p className={cn(
+            'text-[2.4rem] font-extrabold tracking-tight leading-none',
+            isOk ? 'text-emerald-600' : 'text-red-600',
+          )}>
+            {criticalCount.toLocaleString('ca-ES')}
+          </p>
+          <p className={cn('text-[10px] font-medium mt-0.5', isOk ? 'text-emerald-500' : 'text-red-400')}>
+            {isOk ? 'Cap missatge crític' : `missatges crítics · ${barrisCount} barri${barrisCount !== 1 ? 's' : ''}`}
+          </p>
+        </div>
+        {isOk && <span className="text-2xl">✓</span>}
       </div>
 
       {/* Critical barris list */}
-      <div className="space-y-2 pt-4 border-t border-card-line">
-        {criticalCount === 0 ? (
-          <div className="flex flex-col items-center py-4 gap-1">
-            <span className="text-emerald-500 text-xl">✓</span>
-            <p className="text-xs text-muted-foreground-2">Cap alerta crítica</p>
-          </div>
+      <div className="space-y-2 pt-4 border-t border-card-line flex-1">
+        {isOk ? (
+          <p className="text-xs text-muted-foreground-2 text-center py-3">Tots els barris en rang normal</p>
         ) : (
           criticalBarris.map(b => (
-            <div key={b.barri} className="flex items-center justify-between bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-              <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0 mr-2">{b.barri}</span>
+            <div key={b.barri} className="flex items-center justify-between bg-background-1 border border-card-line rounded-xl px-3 py-2 hover:bg-red-50 transition-colors">
+              <div className="flex items-center gap-2 min-w-0 mr-2">
+                <span
+                  className="w-1.5 h-5 rounded-full shrink-0"
+                  style={{
+                    backgroundColor: b.avg_sentiment !== null
+                      ? (b.avg_sentiment < 2.5 ? '#ef4444' : b.avg_sentiment < 3.5 ? '#f97316' : '#f59e0b')
+                      : '#94a3b8',
+                  }}
+                />
+                <span className="text-xs font-medium text-foreground truncate">{b.barri}</span>
+              </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] text-muted-foreground-2">{b.critical_count} crítics</span>
+                <span className="text-[10px] text-muted-foreground-2 tabular-nums">{b.critical_count} crítics</span>
                 {b.avg_sentiment !== null && (
-                  <span className="text-xs font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded tabular-nums">
                     {b.avg_sentiment.toFixed(1)}
                   </span>
                 )}
@@ -354,16 +400,14 @@ interface CategoriesCardProps {
   loading: boolean;
 }
 
-const CATEGORY_BLUES = [
-  '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd',
-];
+const CATEGORY_COLORS = ['#2563eb', '#7c3aed', '#0891b2', '#059669', '#d97706'];
 
 export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
   if (loading) {
     return (
       <CardShell className="gap-0">
         <Skeleton className="h-3 w-28 mb-3" />
-        <Skeleton className="h-6 w-16 mb-5" />
+        <Skeleton className="h-14 w-full rounded-xl mb-5" />
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-5 w-full" />)}
         </div>
@@ -373,46 +417,61 @@ export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
 
   const top5 = stats?.by_clas1.slice(0, 5) ?? [];
   const maxCount = top5[0]?.count ?? 1;
+  const totalMessages = stats?.total ?? 1;
   const totalCategories = stats?.by_clas1.length ?? 0;
 
   return (
     <CardShell className="gap-0">
-      <div className="flex items-center justify-between mb-3">
-        <CardLabel>Top categories</CardLabel>
+      <div className="flex items-start justify-between mb-3">
+        <CardLabel accent="#7c3aed">Top categories</CardLabel>
         <span className="text-[10px] font-semibold text-muted-foreground-2 bg-muted-hover px-1.5 py-0.5 rounded-md">
           {totalCategories} total
         </span>
       </div>
 
       {/* Top category highlight */}
-      <div className="mb-5">
+      <div className="rounded-xl px-3 py-2.5 mb-5 bg-primary/5 border border-primary/10">
         <p className="text-sm font-bold text-foreground leading-snug line-clamp-2">
           {top5[0]?.category ?? '—'}
         </p>
-        <p className="text-[10px] text-muted-foreground-2 mt-0.5">
-          {top5[0]?.count.toLocaleString('ca-ES')} missatges · 1a categoria
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[10px] text-muted-foreground-2">
+            {top5[0]?.count.toLocaleString('ca-ES')} missatges
+          </span>
+          <span className="text-[10px] font-semibold text-primary">
+            {top5[0] ? ((top5[0].count / totalMessages) * 100).toFixed(1) : '0'}%
+          </span>
+        </div>
       </div>
 
       {/* Horizontal bars */}
       <div className="space-y-3 pt-4 border-t border-card-line">
         {top5.map((cat, i) => {
           const pct = (cat.count / maxCount) * 100;
-          const short = cat.category.length > 26
-            ? cat.category.slice(0, 26) + '…'
+          const pctOfTotal = ((cat.count / totalMessages) * 100).toFixed(1);
+          const short = cat.category.length > 24
+            ? cat.category.slice(0, 24) + '…'
             : cat.category;
           return (
             <div key={cat.category}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-foreground truncate flex-1 mr-2">{short}</span>
-                <span className="text-xs font-semibold text-muted-foreground-1 shrink-0">
-                  {cat.count.toLocaleString('ca-ES')}
+                <div className="flex items-center gap-1.5 min-w-0 mr-2">
+                  <span
+                    className="text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 text-white"
+                    style={{ backgroundColor: CATEGORY_COLORS[i] }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="text-xs text-foreground truncate">{short}</span>
+                </div>
+                <span className="text-[10px] font-semibold text-muted-foreground-1 shrink-0 tabular-nums">
+                  {pctOfTotal}%
                 </span>
               </div>
               <div className="h-1.5 bg-muted-hover rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%`, backgroundColor: CATEGORY_BLUES[i] }}
+                  style={{ width: `${pct}%`, backgroundColor: CATEGORY_COLORS[i] }}
                 />
               </div>
             </div>
