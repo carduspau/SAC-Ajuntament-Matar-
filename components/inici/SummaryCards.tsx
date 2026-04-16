@@ -206,10 +206,10 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
   const avg = stats?.avg_sentiment ?? null;
 
   const sentCat =
-    avg === null ? { label: '—',       textCls: 'text-muted-foreground-2', accent: '#94a3b8' } :
-    avg >= 6     ? { label: 'Positiu',  textCls: 'text-emerald-600',        accent: '#10b981' } :
-    avg >= 3.5   ? { label: 'Neutre',   textCls: 'text-amber-500',          accent: '#f59e0b' } :
-                   { label: 'Negatiu',  textCls: 'text-red-500',            accent: '#ef4444' };
+    avg === null ? { label: '—',       textCls: 'text-muted-foreground-2', badgeBg: 'bg-muted-hover', accent: '#94a3b8' } :
+    avg >= 6     ? { label: 'Positiu',  textCls: 'text-emerald-600',        badgeBg: 'bg-emerald-50',  accent: '#10b981' } :
+    avg >= 3.5   ? { label: 'Neutre',   textCls: 'text-amber-500',          badgeBg: 'bg-amber-50',    accent: '#f59e0b' } :
+                   { label: 'Negatiu',  textCls: 'text-red-500',            badgeBg: 'bg-red-50',      accent: '#ef4444' };
 
   const dist = stats?.sentiment_distribution ?? [];
   const negatiu = dist.filter(d => ['0–1','1–2','2–3','3–4'].includes(d.range)).reduce((s, d) => s + d.count, 0);
@@ -231,17 +231,18 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
 
   return (
     <CardShell>
-      <CardLabel accent={sentCat.accent}>Sentiment del període</CardLabel>
-
-      {/* Score + badge */}
-      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 mb-4 bg-background-1 border border-card-line">
-        <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none">
-          {avg !== null ? avg.toFixed(2) : '—'}
-        </p>
-        <span className={cn('text-sm font-bold', sentCat.textCls)}>
+      {/* Header row — label + sentiment badge */}
+      <div className="flex items-start justify-between mb-3">
+        <CardLabel accent={sentCat.accent}>Sentiment del període</CardLabel>
+        <span className={cn('text-xs font-semibold px-2 py-1 rounded-full shrink-0', sentCat.badgeBg, sentCat.textCls)}>
           {sentCat.label}
         </span>
       </div>
+
+      {/* Big number */}
+      <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none mb-4">
+        {avg !== null ? avg.toFixed(2) : '—'}
+      </p>
 
       {/* Sparkline — grows to fill remaining space */}
       {hasTrend ? (
@@ -326,26 +327,23 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
 
   return (
     <CardShell>
-      {/* Header */}
+      {/* Header row */}
       <div className="flex items-start justify-between mb-3">
         <CardLabel accent={isOk ? '#10b981' : '#ef4444'}>Alertes crítiques</CardLabel>
         {!isOk && <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />}
       </div>
 
-      {/* Count block */}
-      <div className="rounded-xl px-3 py-2.5 mb-4 flex items-center justify-between bg-background-1 border border-card-line">
-        <div>
-          <p className={cn(
-            'text-[2.4rem] font-extrabold tracking-tight leading-none',
-            isOk ? 'text-emerald-600' : 'text-red-600',
-          )}>
-            {criticalCount.toLocaleString('ca-ES')}
-          </p>
-          <p className={cn('text-[10px] font-medium mt-0.5', isOk ? 'text-emerald-500' : 'text-red-400')}>
-            {isOk ? 'Cap missatge crític' : `missatges crítics · ${barrisCount} barri${barrisCount !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-        {isOk && <span className="text-2xl">✓</span>}
+      {/* Big number + inline subtitle */}
+      <div className="flex items-baseline gap-2 mb-4">
+        <p className={cn(
+          'text-[2.4rem] font-extrabold tracking-tight leading-none',
+          isOk ? 'text-emerald-600' : 'text-red-600',
+        )}>
+          {criticalCount.toLocaleString('ca-ES')}
+        </p>
+        <span className="text-xs text-muted-foreground">
+          {isOk ? 'sense alertes' : `missatges · ${barrisCount} barri${barrisCount !== 1 ? 's' : ''}`}
+        </span>
       </div>
 
       {/* Critical barris list — grows to fill */}
