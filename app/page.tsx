@@ -2,10 +2,10 @@
 
 import React from 'react';
 import {
-  MissatgesCard,
-  SentimentCard,
-  AlertesCard,
-  CategoriesCard,
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip,
+} from 'recharts';
+import {
+  MissatgesCard, SentimentCard, AlertesCard, CategoriesCard,
 } from '@/components/inici/SummaryCards';
 import { AlertsPanel } from '@/components/inici/AlertsPanel';
 import { QuickNav } from '@/components/inici/QuickNav';
@@ -15,57 +15,52 @@ import { CriticalAlertsSection } from '@/components/inici/CriticalAlertsSection'
 import { TimelineChart } from '@/components/charts/TimelineChart';
 import { HeatmapChart } from '@/components/charts/HeatmapChart';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { useStats } from '@/hooks/useStats';
 import { useTimeline } from '@/hooks/useTimeline';
+import { useEnrichedStats } from '@/hooks/useEnrichedStats';
 import { useDateRange } from '@/context/DateRangeContext';
+import { INTENT_META, EXPERIENCE_META, LANGUAGE_META, intentMeta, experienceMeta, languageMeta } from '@/lib/intentColors';
+import { cn } from '@/lib/utils';
+
+const INTENT_ORDER = ['queixa', 'incidència', 'consulta', 'sol·licitud', 'suggeriment', 'agraïment'];
+const EXP_ORDER    = ['primera_interacció', 'reincident_satisfet', 'reincident_frustrat'];
 
 export default function InicioPage() {
   const { data: stats, loading: statsLoading } = useStats();
   const { data: timeline, loading: timelineLoading } = useTimeline();
+  const { data: enriched, loading: enrichedLoading } = useEnrichedStats();
   const { granularity, from, to } = useDateRange();
 
   const topLoading = statsLoading || timelineLoading;
+
+  // Intent pie data
+  const intentPie = INTENT_ORDER
+    .map(k => ({ name: intentMeta(k).label, value: enriched?.by_intent.find(i => i.key === k)?.count ?? 0, hex: intentMeta(k).hex }))
+    .filter(d => d.value > 0);
+
+  // Experience bar data
+  const expBar = EXP_ORDER
+    .map(k => ({ name: experienceMeta(k).label, value: enriched?.by_experience.find(e => e.key === k)?.count ?? 0, hex: experienceMeta(k).hex }))
+    .filter(d => d.value > 0);
+
+  // Language pills
+  const langData = enriched?.by_language ?? [];
 
   return (
     <div className="space-y-6">
       {/* 4 Rich Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-        <MissatgesCard
-          stats={stats}
-          timeline={timeline}
-          loading={topLoading}
-          granularity={granularity}
-          from={from}
-          to={to}
-        />
-        <SentimentCard
-          stats={stats}
-          timeline={timeline}
-          loading={topLoading}
-          granularity={granularity}
-        />
-        <AlertesCard
-          stats={stats}
-          loading={statsLoading}
-        />
-        <CategoriesCard
-          stats={stats}
-          loading={statsLoading}
-        />
+        <MissatgesCard stats={stats} timeline={timeline} loading={topLoading} granularity={granularity} from={from} to={to} />
+        <SentimentCard stats={stats} timeline={timeline} loading={topLoading} granularity={granularity} />
+        <AlertesCard stats={stats} loading={statsLoading} />
+        <CategoriesCard stats={stats} loading={statsLoading} />
       </div>
 
       {/* Timeline Chart */}
       <Card>
-        <CardHeader>
-          <CardTitle>Evolució temporal</CardTitle>
-        </CardHeader>
-        <TimelineChart
-          data={timeline}
-          loading={timelineLoading}
-          granularity={granularity}
-          height={300}
-          showSentiment
-        />
+        <CardHeader><CardTitle>Evolució temporal</CardTitle></CardHeader>
+        <TimelineChart data={timeline} loading={timelineLoading} granularity={granularity} height={300} showSentiment />
       </Card>
 
       {/* Categories + Canal charts */}
@@ -74,22 +69,119 @@ export default function InicioPage() {
         <CanalChart data={stats?.by_canal ?? []} loading={statsLoading} />
       </div>
 
-      {/* Full-width Critical Alerts Section — only shown when there are critical messages */}
+      {/* Full-width Critical Alerts Section */}
       <CriticalAlertsSection stats={stats} loading={statsLoading} />
+
+      {/* ── Intencions & Seguiment ── */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground">Intencions i experiència ciutadana</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Intent donut */}
+          <Card>
+            <CardHeader><CardTitle>Distribució per intenció</CardTitle></CardHeader>
+            {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (
+              <div className="flex items-center gap-2">
+                <ResponsiveContainer width="55%" height={200}>
+                  <PieChart>
+                    <Pie data={intentPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
+                      {intentPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                      contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex-1 space-y-1.5">
+                  {intentPie.map(d => (
+                    <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
+                      <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
+                      <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Experience signal bar */}
+          <Card>
+            <CardHeader><CardTitle>Experiència ciutadana</CardTitle></CardHeader>
+            {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (
+              <div className="space-y-4 pt-2">
+                {expBar.map(d => {
+                  const total = expBar.reduce((s, x) => s + x.value, 0);
+                  const pct = total > 0 ? (d.value / total) * 100 : 0;
+                  return (
+                    <div key={d.name}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-medium text-foreground">{d.name}</span>
+                        <span className="text-muted-foreground-2">{d.value.toLocaleString('ca-ES')} ({pct.toFixed(0)}%)</span>
+                      </div>
+                      <div className="h-2 bg-muted-hover rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: d.hex }} />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Language split */}
+                <div className="pt-2 border-t border-card-line">
+                  <p className="text-xs font-medium text-muted-foreground-2 mb-2 uppercase tracking-wide">Idioma</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {langData.map(l => {
+                      const m = languageMeta(l.key);
+                      return (
+                        <span key={l.key} className={cn('inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold', m.bg, m.text)}>
+                          {m.label}
+                          <span className="font-bold">{l.pct.toFixed(0)}%</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Followup KPI */}
+          <Card>
+            <CardHeader><CardTitle>Seguiment pendent</CardTitle></CardHeader>
+            {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (
+              <div className="flex flex-col items-center justify-center gap-4 py-4">
+                <div className="relative w-32 h-32">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" strokeWidth="12" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#ef4444" strokeWidth="12"
+                      strokeDasharray={`${2 * Math.PI * 40 * (enriched?.followup_pct ?? 0) / 100} ${2 * Math.PI * 40}`}
+                      strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-extrabold text-red-600">{(enriched?.followup_pct ?? 0).toFixed(0)}%</span>
+                    <span className="text-[10px] text-muted-foreground-2">del total</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-extrabold text-foreground">{enriched?.followup_count.toLocaleString('ca-ES') ?? '—'}</p>
+                  <p className="text-sm text-muted-foreground-2">missatges requereixen seguiment</p>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+      </section>
 
       {/* Heatmap full width */}
       <Card>
-        <CardHeader>
-          <CardTitle>Mapa de calor: dia × hora</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Mapa de calor: dia × hora</CardTitle></CardHeader>
         <HeatmapChart data={stats?.heatmap ?? []} loading={statsLoading} />
       </Card>
 
       {/* Alerts + Quick Nav */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <AlertsPanel />
-        </div>
+        <div className="lg:col-span-1"><AlertsPanel /></div>
         <div className="lg:col-span-2">
           <h2 className="text-sm font-semibold text-muted-foreground-1 mb-3">Accés ràpid</h2>
           <QuickNav />

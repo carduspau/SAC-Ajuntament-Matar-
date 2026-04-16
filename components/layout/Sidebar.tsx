@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart2, Map, Building2,
   MessageSquare, FileText, ChevronLeft, ChevronRight,
-  AlertTriangle, User, LogOut,
+  AlertTriangle, User, LogOut, Layers, ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCriticalCount } from '@/hooks/useCriticalCount';
@@ -15,6 +15,8 @@ const NAV_ITEMS = [
   { href: '/', label: 'Inici', icon: LayoutDashboard },
   { href: '/estadistiques', label: 'Estadístiques', icon: BarChart2 },
   { href: '/alertes', label: 'Alertes crítiques', icon: AlertTriangle },
+  { href: '/departaments', label: 'Departaments', icon: Layers },
+  { href: '/gestio', label: 'Gestió operativa', icon: ClipboardList },
   { href: '/mapa', label: 'Mapa', icon: Map },
   { href: '/barris', label: 'Barris', icon: Building2 },
   { href: '/missatges', label: 'Missatges', icon: MessageSquare },

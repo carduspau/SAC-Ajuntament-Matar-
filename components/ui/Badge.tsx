@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { parseSentiment, sentimentBgColor, sentimentLabel } from '@/lib/sentiment';
+import { intentMeta, deptMeta, actionMeta, experienceMeta, languageMeta } from '@/lib/intentColors';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -52,6 +53,58 @@ export function CanalBadge({ canal }: { canal: string | null | undefined }) {
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', cls)}>
       {canal ?? '—'}
+    </span>
+  );
+}
+
+export function IntentBadge({ intent }: { intent: string | null | undefined }) {
+  const m = intentMeta(intent ?? null);
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', m.bg, m.text)}>
+      {m.label}
+    </span>
+  );
+}
+
+export function DeptBadge({ dept }: { dept: string | null | undefined }) {
+  const m = deptMeta(dept ?? null);
+  return (
+    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', m.bg, m.text)}>
+      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: m.hex }} />
+      {m.label}
+    </span>
+  );
+}
+
+export function ActionBadge({ action }: { action: string | null | undefined }) {
+  const m = actionMeta(action ?? null);
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', m.bg, m.text)}>
+      {m.label}
+    </span>
+  );
+}
+
+export function ExperienceBadge({ signal }: { signal: string | null | undefined }) {
+  const m = experienceMeta(signal ?? null);
+  const icons: Record<string, string> = {
+    'primera_interacció': '👤',
+    'reincident_satisfet': '✓',
+    'reincident_frustrat': '⚠',
+  };
+  return (
+    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', m.bg, m.text)}>
+      <span>{icons[signal ?? ''] ?? ''}</span>
+      {m.label}
+    </span>
+  );
+}
+
+export function LanguageBadge({ lang }: { lang: string | null | undefined }) {
+  const m = languageMeta(lang ?? null);
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', m.bg, m.text)}>
+      {m.label}
     </span>
   );
 }
