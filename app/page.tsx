@@ -27,7 +27,7 @@ export default function InicioPage() {
   return (
     <div className="space-y-6">
       {/* 4 Rich Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
         <MissatgesCard
           stats={stats}
           timeline={timeline}
