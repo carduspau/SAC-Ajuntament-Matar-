@@ -9,7 +9,7 @@ import {
 import { AlertTriangle, ArrowUpRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ca } from 'date-fns/locale';
 import type { StatsResponse, TimelineBucket, TimelineGranularity } from '@/types';
 
@@ -50,9 +50,11 @@ interface MissatgesCardProps {
   timeline: TimelineBucket[];
   loading: boolean;
   granularity: TimelineGranularity;
+  from: Date;
+  to: Date;
 }
 
-export function MissatgesCard({ stats, timeline, loading, granularity }: MissatgesCardProps) {
+export function MissatgesCard({ stats, timeline, loading, granularity, from, to }: MissatgesCardProps) {
   if (loading) {
     return (
       <CardShell className="gap-0">
@@ -68,7 +70,8 @@ export function MissatgesCard({ stats, timeline, loading, granularity }: Missatg
   const chartData = timeline.map(d => ({ b: d.bucket, v: d.count }));
   const hasTrend = chartData.length >= 2;
 
-  const avgPerBucket = timeline.length > 0 ? Math.round(total / timeline.length) : 0;
+  const dayCount = differenceInCalendarDays(to, from) + 1;
+  const dailyAvg = dayCount > 0 ? Math.round(total / dayCount) : 0;
   const peakBucket   = timeline.length > 0
     ? timeline.reduce((best, d) => d.count > best.count ? d : best)
     : null;
@@ -124,8 +127,8 @@ export function MissatgesCard({ stats, timeline, loading, granularity }: Missatg
       {/* Footer stats */}
       <div className="flex items-stretch gap-0 pt-4 border-t border-card-line">
         <div className="flex-1">
-          <p className="text-[10px] text-muted-foreground-2 mb-0.5">Mitjana / {granularity === 'hour' ? 'hora' : granularity === 'day' ? 'dia' : granularity === 'week' ? 'setmana' : 'mes'}</p>
-          <p className="text-sm font-bold text-foreground">{avgPerBucket.toLocaleString('ca-ES')}</p>
+          <p className="text-[10px] text-muted-foreground-2 mb-0.5">Mitjana diaria</p>
+          <p className="text-sm font-bold text-foreground">{dailyAvg.toLocaleString('ca-ES')}</p>
         </div>
         {peakBucket && (
           <>
@@ -287,7 +290,7 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
 
   const criticalCount = stats?.critical_count ?? 0;
   const criticalBarris = (stats?.by_barri ?? [])
-    .filter(b => b.avg_sentiment !== null && b.avg_sentiment < 3.5)
+    .filter(b => b.critical_count > 0)
     .sort((a, b) => (a.avg_sentiment ?? 10) - (b.avg_sentiment ?? 10))
     .slice(0, 4);
 
@@ -311,7 +314,7 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
 
       {/* Critical barris list */}
       <div className="space-y-2 pt-4 border-t border-card-line">
-        {criticalBarris.length === 0 ? (
+        {criticalCount === 0 ? (
           <div className="flex flex-col items-center py-4 gap-1">
             <span className="text-emerald-500 text-xl">✓</span>
             <p className="text-xs text-muted-foreground-2">Cap alerta crítica</p>
@@ -321,10 +324,12 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
             <div key={b.barri} className="flex items-center justify-between bg-red-50 border border-red-100 rounded-xl px-3 py-2">
               <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0 mr-2">{b.barri}</span>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] text-muted-foreground-2">{b.count} msg</span>
-                <span className="text-xs font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
-                  {b.avg_sentiment?.toFixed(1)}
-                </span>
+                <span className="text-[10px] text-muted-foreground-2">{b.critical_count} crítics</span>
+                {b.avg_sentiment !== null && (
+                  <span className="text-xs font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
+                    {b.avg_sentiment.toFixed(1)}
+                  </span>
+                )}
               </div>
             </div>
           ))

@@ -56,6 +56,7 @@ export interface BarriStat {
   count: number;
   avg_sentiment: number | null;
   top_category: string | null;
+  critical_count: number;
 }
 
 export interface CanalStat {

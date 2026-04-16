@@ -15,20 +15,23 @@ export function computeStats(rows: RawMessage[]): StatsResponse {
   const sentiments = rows.map(r => parseSentiment(r.sentiment ?? null)).filter(s => s !== null) as number[];
   const avgSentiment = sentiments.length > 0
     ? sentiments.reduce((a, b) => a + b, 0) / sentiments.length : null;
-  const criticalCount = sentiments.filter(s => s < 3).length;
+  const criticalCount = sentiments.filter(s => s < 3.5).length;
 
-  const barriMap = new Map<string, { count: number; sentiments: number[]; categories: Map<string, number> }>();
+  const barriMap = new Map<string, { count: number; sentiments: number[]; categories: Map<string, number>; criticalCount: number }>();
   const canalMap = new Map<string, number>();
   const clas1Map = new Map<string, number>();
   const heatmapMap = new Map<string, number>();
 
   for (const r of rows) {
     const b = r.barri ?? 'Desconegut';
-    if (!barriMap.has(b)) barriMap.set(b, { count: 0, sentiments: [], categories: new Map() });
+    if (!barriMap.has(b)) barriMap.set(b, { count: 0, sentiments: [], categories: new Map(), criticalCount: 0 });
     const entry = barriMap.get(b)!;
     entry.count++;
     const s = parseSentiment(r.sentiment ?? null);
-    if (s !== null) entry.sentiments.push(s);
+    if (s !== null) {
+      entry.sentiments.push(s);
+      if (s < 3.5) entry.criticalCount++;
+    }
     const cat = r.clas1 ?? 'Altres';
     entry.categories.set(cat, (entry.categories.get(cat) ?? 0) + 1);
 
@@ -53,6 +56,7 @@ export function computeStats(rows: RawMessage[]): StatsResponse {
         ? e.sentiments.reduce((a, c) => a + c, 0) / e.sentiments.length : null,
       top_category: e.categories.size > 0
         ? Array.from(e.categories.entries()).sort((a, b) => b[1] - a[1])[0][0] : null,
+      critical_count: e.criticalCount,
     }))
     .sort((a, b) => b.count - a.count);
 

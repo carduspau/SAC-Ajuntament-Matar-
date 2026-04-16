@@ -29,17 +29,20 @@ export async function GET(req: NextRequest) {
   const avgSentiment = sentiments.length > 0
     ? sentiments.reduce((a, b) => a + b, 0) / sentiments.length
     : null;
-  const criticalCount = sentiments.filter(s => s < 3).length;
+  const criticalCount = sentiments.filter(s => s < 3.5).length;
 
   // By barri
-  const barriMap = new Map<string, { count: number; sentiments: number[]; categories: Map<string, number> }>();
+  const barriMap = new Map<string, { count: number; sentiments: number[]; categories: Map<string, number>; criticalCount: number }>();
   for (const r of rows) {
     const b = r.barri ?? 'Desconegut';
-    if (!barriMap.has(b)) barriMap.set(b, { count: 0, sentiments: [], categories: new Map() });
+    if (!barriMap.has(b)) barriMap.set(b, { count: 0, sentiments: [], categories: new Map(), criticalCount: 0 });
     const entry = barriMap.get(b)!;
     entry.count++;
     const s = parseSentiment(r.sentiment);
-    if (s !== null) entry.sentiments.push(s);
+    if (s !== null) {
+      entry.sentiments.push(s);
+      if (s < 3.5) entry.criticalCount++;
+    }
     const cat = r.clas1 ?? 'Altres';
     entry.categories.set(cat, (entry.categories.get(cat) ?? 0) + 1);
   }
@@ -53,6 +56,7 @@ export async function GET(req: NextRequest) {
       top_category: e.categories.size > 0
         ? Array.from(e.categories.entries()).sort((a, b) => b[1] - a[1])[0][0]
         : null,
+      critical_count: e.criticalCount,
     }))
     .sort((a, b) => b.count - a.count);
 

@@ -20,7 +20,7 @@ import { useDateRange } from '@/context/DateRangeContext';
 export default function InicioPage() {
   const { data: stats, loading: statsLoading } = useStats();
   const { data: timeline, loading: timelineLoading } = useTimeline();
-  const { granularity } = useDateRange();
+  const { granularity, from, to } = useDateRange();
 
   const topLoading = statsLoading || timelineLoading;
 
@@ -33,6 +33,8 @@ export default function InicioPage() {
           timeline={timeline}
           loading={topLoading}
           granularity={granularity}
+          from={from}
+          to={to}
         />
         <SentimentCard
           stats={stats}
