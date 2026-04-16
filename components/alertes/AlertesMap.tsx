@@ -1,22 +1,22 @@
 'use client';
 
 import React from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import type { SacMessage } from '@/types';
 import { parseSentiment } from '@/lib/sentiment';
-import { formatDate } from '@/lib/utils';
 
 interface Props {
   alerts: SacMessage[];
+  onSelect?: (m: SacMessage) => void;
 }
 
 function severityColor(score: number | null): string {
   if (score === null) return '#64748b';
-  if (score < 2.5) return '#dc2626'; // red-600
-  return '#f97316'; // orange-500
+  if (score < 2.5) return '#dc2626';
+  return '#f97316';
 }
 
-export function AlertesMap({ alerts }: Props) {
+export function AlertesMap({ alerts, onSelect }: Props) {
   const withCoords = alerts.filter(a => a.lat !== null && a.lng !== null);
 
   const center: [number, number] = withCoords.length > 0
@@ -24,7 +24,7 @@ export function AlertesMap({ alerts }: Props) {
         withCoords.reduce((s, a) => s + a.lat!, 0) / withCoords.length,
         withCoords.reduce((s, a) => s + a.lng!, 0) / withCoords.length,
       ]
-    : [41.5381, 2.4449]; // Mataró default
+    : [41.5381, 2.4449];
 
   return (
     <MapContainer
@@ -52,20 +52,8 @@ export function AlertesMap({ alerts }: Props) {
               color: '#fff',
               weight: 1.5,
             }}
-          >
-            <Popup>
-              <div className="text-xs space-y-1">
-                <div className="font-semibold text-foreground">{alert.barri ?? '—'}</div>
-                <div className="text-muted-foreground">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</div>
-                {alert.clas1 && <div className="text-muted-foreground-1">{alert.clas1}</div>}
-                {score !== null && (
-                  <div style={{ color }} className="font-bold">
-                    Sentiment: {score.toFixed(1)}
-                  </div>
-                )}
-              </div>
-            </Popup>
-          </CircleMarker>
+            eventHandlers={onSelect ? { click: () => onSelect(alert) } : undefined}
+          />
         );
       })}
     </MapContainer>

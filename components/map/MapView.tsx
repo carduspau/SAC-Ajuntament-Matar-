@@ -20,6 +20,7 @@ interface Props {
   barriStats: BarriStat[];
   messages: SacMessage[];
   colorBy: 'count' | 'sentiment';
+  onSelectMessage?: (m: SacMessage) => void;
 }
 
 export function MapView(props: Props) {

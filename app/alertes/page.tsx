@@ -6,10 +6,11 @@ import {
   AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis,
   ResponsiveContainer, Tooltip as RechartsTooltip,
 } from 'recharts';
-import { AlertTriangle, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { AlertTriangle, MapPin } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { MessageDetail } from '@/components/missatges/MessageDetail';
 import { supabase } from '@/lib/supabase';
 import { parseSentiment } from '@/lib/sentiment';
 import { formatDate, truncate, cn } from '@/lib/utils';
@@ -45,54 +46,33 @@ function formatBucket(bucket: string, granularity: TimelineGranularity): string 
   } catch { return bucket; }
 }
 
-function AlertRow({ alert }: { alert: SacMessage }) {
-  const [open, setOpen] = useState(false);
+function AlertRow({ alert, onClick }: { alert: SacMessage; onClick: () => void }) {
   const score = parseSentiment(alert.sentiment);
 
   return (
-    <div className="border border-card-line rounded-xl overflow-hidden">
-      <div
-        className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted-hover transition-colors"
-        onClick={() => setOpen(v => !v)}
-      >
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-          score !== null && score < 2.5 ? 'bg-red-100' : 'bg-amber-100'
+    <div
+      className="flex items-start gap-3 p-4 border border-card-line rounded-xl cursor-pointer hover:bg-muted-hover transition-colors"
+      onClick={onClick}
+    >
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+        score !== null && score < 2.5 ? 'bg-red-100' : 'bg-amber-100'
+      }`}>
+        <span className={`text-sm font-bold ${
+          score !== null && score < 2.5 ? 'text-red-600' : 'text-amber-600'
         }`}>
-          <span className={`text-sm font-bold ${
-            score !== null && score < 2.5 ? 'text-red-600' : 'text-amber-600'
-          }`}>
-            {score !== null ? score.toFixed(1) : '—'}
-          </span>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-foreground">{alert.barri ?? '—'}</span>
-            {alert.clas1 && <Badge variant="info" className="text-xs">{alert.clas1}</Badge>}
-            {alert.canal && <Badge variant="neutral" className="text-xs">{alert.canal}</Badge>}
-            <span className="text-xs text-muted-foreground-2 ml-auto">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</span>
-          </div>
-          <p className="text-sm text-muted-foreground-1 line-clamp-2">{truncate(alert.message, 140)}</p>
-        </div>
-
-        <div className="shrink-0 text-muted-foreground-2">
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </div>
+          {score !== null ? score.toFixed(1) : '—'}
+        </span>
       </div>
 
-      {open && alert.message && (
-        <div className="px-4 pb-4 pt-0 border-t border-card-line bg-background-1">
-          <p className="text-sm text-foreground leading-relaxed">{alert.message}</p>
-          {alert.situation && (
-            <p className="text-xs text-muted-foreground mt-2 italic">{alert.situation}</p>
-          )}
-          <div className="flex gap-3 mt-3 text-xs text-muted-foreground-2">
-            {alert.ciutada && <span>Ciutadà: {alert.ciutada}</span>}
-            {alert.clas2 && <span>· {alert.clas2}</span>}
-            {alert.clas3 && <span>· {alert.clas3}</span>}
-          </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 mb-1">
+          <span className="text-sm font-semibold text-foreground">{alert.barri ?? '—'}</span>
+          {alert.clas1 && <Badge variant="info" className="text-xs">{alert.clas1}</Badge>}
+          {alert.canal && <Badge variant="neutral" className="text-xs">{alert.canal}</Badge>}
+          <span className="text-xs text-muted-foreground-2 ml-auto">{formatDate(alert.data_inici, 'dd/MM/yyyy')}</span>
         </div>
-      )}
+        <p className="text-sm text-muted-foreground-1 line-clamp-2">{truncate(alert.message, 140)}</p>
+      </div>
     </div>
   );
 }
@@ -105,6 +85,7 @@ export default function AlertesPage() {
   const [avgSentiment, setAvgSentiment] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<SeverityFilter>('all');
+  const [selectedMessage, setSelectedMessage] = useState<SacMessage | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -349,7 +330,7 @@ export default function AlertesPage() {
               {loading ? (
                 <Skeleton className="w-full h-full min-h-[360px]" />
               ) : (
-                <AlertesMapDynamic alerts={filtered} />
+                <AlertesMapDynamic alerts={filtered} onSelect={setSelectedMessage} />
               )}
             </div>
           </Card>
@@ -395,11 +376,13 @@ export default function AlertesPage() {
             </div>
           ) : (
             filtered.slice(0, 30).map(alert => (
-              <AlertRow key={alert.id} alert={alert} />
+              <AlertRow key={alert.id} alert={alert} onClick={() => setSelectedMessage(alert)} />
             ))
           )}
         </div>
       </Card>
+
+      <MessageDetail message={selectedMessage} onClose={() => setSelectedMessage(null)} />
     </div>
   );
 }

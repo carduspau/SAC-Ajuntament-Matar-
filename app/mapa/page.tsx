@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layers, MapPin } from 'lucide-react';
 import { MapView } from '@/components/map/MapView';
+import { MessageDetail } from '@/components/missatges/MessageDetail';
 import { Select } from '@/components/ui/Select';
 import { useStats } from '@/hooks/useStats';
 import { useDateRange } from '@/context/DateRangeContext';
@@ -18,6 +19,7 @@ export default function MapaPage() {
   const [colorBy, setColorBy] = useState<'count' | 'sentiment'>('count');
   const [messages, setMessages] = useState<SacMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<SacMessage | null>(null);
 
   const fetchMessages = useCallback(async () => {
     if (mode !== 'cluster') return;
@@ -112,8 +114,10 @@ export default function MapaPage() {
           barriStats={stats?.by_barri ?? []}
           messages={messages}
           colorBy={colorBy}
+          onSelectMessage={setSelectedMessage}
         />
       </div>
+      <MessageDetail message={selectedMessage} onClose={() => setSelectedMessage(null)} />
     </div>
   );
 }

@@ -23,6 +23,7 @@ interface Props {
   barriStats: BarriStat[];
   messages: SacMessage[];
   colorBy: 'count' | 'sentiment';
+  onSelectMessage?: (m: SacMessage) => void;
 }
 
 // ─── Colour helpers (matching SAC-Demo blue scale) ───────────────────────────
@@ -322,7 +323,7 @@ function makePointPopupHtml(msgs: SacMessage[]): string {
   `;
 }
 
-function PointLayer({ messages }: { messages: SacMessage[] }) {
+function PointLayer({ messages, onSelectMessage }: { messages: SacMessage[]; onSelectMessage?: (m: SacMessage) => void }) {
   const map = useMap();
   const markersRef = useRef<L.Marker[]>([]);
   const renderScheduled = useRef(false);
@@ -339,15 +340,14 @@ function PointLayer({ messages }: { messages: SacMessage[] }) {
       const icon = makeIncidentIcon(msgs.length);
       const marker = L.marker([lat, lng], { icon });
 
-      const popupHtml = makePointPopupHtml(msgs);
-      marker.bindPopup(popupHtml, {
-        closeButton: false,
-        className: 'hs-point-popup',
-        offset: [0, -clusterSizePx(msgs.length) / 2],
-      });
-
       if (msgs.length > 1) {
-        // Click cluster → zoom in
+        // Cluster → zoom in on click, popup on hover
+        const popupHtml = makePointPopupHtml(msgs);
+        marker.bindPopup(popupHtml, {
+          closeButton: false,
+          className: 'hs-point-popup',
+          offset: [0, -clusterSizePx(msgs.length) / 2],
+        });
         marker.on('click', () => {
           const lats = msgs.map(m => m.lat ?? lat);
           const lngs = msgs.map(m => m.lng ?? lng);
@@ -359,15 +359,24 @@ function PointLayer({ messages }: { messages: SacMessage[] }) {
         });
         marker.on('mouseover', () => marker.openPopup());
         marker.on('mouseout', () => marker.closePopup());
+      } else if (onSelectMessage) {
+        // Single marker → open React detail modal
+        marker.on('click', () => onSelectMessage(msgs[0]));
       } else {
-        // Single marker: click to open popup
+        // Single marker fallback: popup on hover
+        const popupHtml = makePointPopupHtml(msgs);
+        marker.bindPopup(popupHtml, {
+          closeButton: false,
+          className: 'hs-point-popup',
+          offset: [0, -clusterSizePx(msgs.length) / 2],
+        });
         marker.on('mouseover', () => marker.openPopup());
       }
 
       marker.addTo(map);
       markersRef.current.push(marker);
     }
-  }, [map, messages]);
+  }, [map, messages, onSelectMessage]);
 
   // Re-render clusters on zoom/move end
   useMapEvents({
@@ -404,7 +413,7 @@ function PointLayer({ messages }: { messages: SacMessage[] }) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function MapContainerComponent({ mode, geojson, barriStats, messages, colorBy }: Props) {
+export default function MapContainerComponent({ mode, geojson, barriStats, messages, colorBy, onSelectMessage }: Props) {
   return (
     <LeafletMap
       center={[41.543, 2.447]}
@@ -426,7 +435,7 @@ export default function MapContainerComponent({ mode, geojson, barriStats, messa
       {mode === 'choropleth' ? (
         <ChoroplethLayer geojson={geojson} barriStats={barriStats} colorBy={colorBy} />
       ) : (
-        <PointLayer messages={messages} />
+        <PointLayer messages={messages} onSelectMessage={onSelectMessage} />
       )}
     </LeafletMap>
   );

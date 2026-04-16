@@ -17,8 +17,8 @@ import { parseSentiment } from '@/lib/sentiment';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
-import type { StatsResponse } from '@/types';
-import type { CritPoint } from './CriticalAlertsSectionMap';
+import type { StatsResponse, SacMessage } from '@/types';
+import { MessageDetail } from '@/components/missatges/MessageDetail';
 
 const CriticalAlertsSectionMap = dynamic(
   () =>
@@ -54,14 +54,15 @@ function severityBarColor(avgSentiment: number | null): string {
 
 export function CriticalAlertsSection({ stats, loading }: Props) {
   const { from, to } = useDateRange();
-  const [mapPoints, setMapPoints] = useState<CritPoint[]>([]);
+  const [mapPoints, setMapPoints] = useState<SacMessage[]>([]);
   const [critCategories, setCritCategories] = useState<CritCategory[]>([]);
+  const [selectedMessage, setSelectedMessage] = useState<SacMessage | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       const { data, error } = await supabase
         .from('sac_messages')
-        .select('id, lat, lng, barri, sentiment, clas1')
+        .select('*')
         .gte('data_inici', from.toISOString())
         .lte('data_inici', to.toISOString())
         .not('lat', 'is', null)
@@ -73,7 +74,7 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
       const filtered = data.filter((r) => {
         const score = parseSentiment(r.sentiment);
         return score !== null && score < 3.5;
-      }) as CritPoint[];
+      }) as SacMessage[];
 
       setMapPoints(filtered);
 
@@ -166,14 +167,14 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
         </Card>
 
         {/* Column 2: Map */}
-        <Card className="min-h-[320px]" padding={false}>
-          <div className="p-5 pb-3">
+        <Card className="flex flex-col overflow-hidden min-h-[320px]" padding={false}>
+          <div className="px-5 pt-5 pb-3 shrink-0">
             <CardHeader className="mb-0">
               <CardTitle>Mapa d&apos;alertes</CardTitle>
             </CardHeader>
           </div>
-          <div style={{ height: 280 }} className="px-3 pb-3">
-            <CriticalAlertsSectionMap points={mapPoints} />
+          <div className="flex-1 min-h-0">
+            <CriticalAlertsSectionMap points={mapPoints} onSelect={setSelectedMessage} />
           </div>
         </Card>
 
@@ -256,6 +257,7 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
           )}
         </Card>
       </div>
+      <MessageDetail message={selectedMessage} onClose={() => setSelectedMessage(null)} />
     </section>
   );
 }
