@@ -1,12 +1,11 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import {
   AreaChart, Area, ResponsiveContainer,
   Tooltip as RechartsTooltip,
 } from 'recharts';
-import { AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
@@ -15,7 +14,6 @@ import type { StatsResponse, TimelineBucket, TimelineGranularity } from '@/types
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
-/** Cards fill the full row height — flex-col with flex-1 on the growing section */
 function CardShell({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn(
@@ -80,9 +78,6 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
 
   const dayCount = differenceInCalendarDays(to, from) + 1;
   const dailyAvg = dayCount > 0 ? Math.round(total / dayCount) : 0;
-  const peakBucket = timeline.length > 0
-    ? timeline.reduce((best, d) => d.count > best.count ? d : best)
-    : null;
 
   let trendPct: number | null = null;
   if (hasTrend && timeline.length >= 4) {
@@ -94,6 +89,17 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
 
   const firstLabel = hasTrend ? formatBucketShort(timeline[0].bucket, granularity) : '';
   const lastLabel  = hasTrend ? formatBucketShort(timeline[timeline.length - 1].bucket, granularity) : '';
+
+  // Custom tooltip
+  function MsgTooltip({ active, payload }: { active?: boolean; payload?: { value: number; payload: { b: string } }[] }) {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-card border border-card-line rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
+        <p className="text-muted-foreground-2 mb-0.5">{formatBucketShort(payload[0].payload.b, granularity)}</p>
+        <p className="font-bold text-foreground">{payload[0].value.toLocaleString('ca-ES')} missatges</p>
+      </div>
+    );
+  }
 
   return (
     <CardShell>
@@ -116,7 +122,7 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
         {total.toLocaleString('ca-ES')}
       </p>
 
-      {/* Chart — grows to fill remaining space */}
+      {/* Chart — grows to fill */}
       {hasTrend ? (
         <div className="flex-1 min-h-0 -mx-5 flex flex-col">
           <div className="flex-1 min-h-[80px]">
@@ -129,11 +135,11 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
                   </linearGradient>
                 </defs>
                 <RechartsTooltip
-                  contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 11, padding: '4px 10px' }}
-                  formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                  labelFormatter={() => ''}
+                  content={<MsgTooltip />}
+                  cursor={{ stroke: '#2563eb', strokeWidth: 1, strokeDasharray: '3 3' }}
                 />
                 <Area
+                  type="monotone"
                   dataKey="v"
                   stroke="#2563eb"
                   strokeWidth={2}
@@ -155,23 +161,26 @@ export function MissatgesCard({ stats, timeline, loading, granularity, from, to 
         </div>
       )}
 
-      {/* Footer stats */}
-      <div className="flex items-stretch gap-0 pt-4 border-t border-card-line">
+      {/* Footer — 2 KPIs: daily avg + trend */}
+      <div className="flex items-stretch pt-4 border-t border-card-line">
         <div className="flex-1">
           <p className="text-[10px] text-muted-foreground-2 mb-1">Mitjana diaria</p>
           <p className="text-sm font-bold text-foreground">{dailyAvg.toLocaleString('ca-ES')}</p>
         </div>
-        {peakBucket && (
+        {trendPct !== null && (
           <>
             <div className="w-px bg-card-line mx-3" />
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground-2 mb-1">Pic</p>
-              <p className="text-sm font-bold text-foreground">{peakBucket.count.toLocaleString('ca-ES')}</p>
-            </div>
-            <div className="w-px bg-card-line mx-3" />
-            <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground-2 mb-1">Data del pic</p>
-              <p className="text-sm font-bold text-foreground">{formatBucketShort(peakBucket.bucket, granularity)}</p>
+              <p className="text-[10px] text-muted-foreground-2 mb-1">Tendència</p>
+              <p className={cn(
+                'text-sm font-bold flex items-center gap-1',
+                trendPct >= 0 ? 'text-emerald-600' : 'text-red-500',
+              )}>
+                {trendPct >= 0
+                  ? <TrendingUp className="w-3.5 h-3.5" />
+                  : <TrendingDown className="w-3.5 h-3.5" />}
+                {trendPct >= 0 ? 'Alça' : 'Baixa'} {Math.abs(trendPct)}%
+              </p>
             </div>
           </>
         )}
@@ -189,12 +198,12 @@ interface SentimentCardProps {
   granularity: TimelineGranularity;
 }
 
-export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) {
+export function SentimentCard({ stats, timeline, loading, granularity }: SentimentCardProps) {
   if (loading) {
     return (
       <CardShell>
         <Skeleton className="h-3 w-24 mb-3" />
-        <Skeleton className="h-14 w-full rounded-xl mb-4" />
+        <Skeleton className="h-10 w-28 mb-4" />
         <Skeleton className="flex-1 w-full rounded-xl mb-4" style={{ minHeight: 60 }} />
         <div className="space-y-3 pt-4 border-t border-card-line">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-4 w-full" />)}
@@ -225,9 +234,19 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
 
   const sentChartData = timeline
     .filter(d => d.avg_sentiment !== null)
-    .map(d => ({ v: d.avg_sentiment! }));
+    .map(d => ({ b: d.bucket, v: d.avg_sentiment! }));
   const hasTrend = sentChartData.length >= 2;
   const sentColor = sentCat.accent;
+
+  function SentTooltip({ active, payload }: { active?: boolean; payload?: { value: number; payload: { b: string } }[] }) {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-card border border-card-line rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
+        <p className="text-muted-foreground-2 mb-0.5">{formatBucketShort(payload[0].payload.b, granularity)}</p>
+        <p className="font-bold text-foreground">{payload[0].value.toFixed(2)} / 10</p>
+      </div>
+    );
+  }
 
   return (
     <CardShell>
@@ -239,12 +258,17 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
         </span>
       </div>
 
-      {/* Big number */}
-      <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none mb-4">
-        {avg !== null ? avg.toFixed(2) : '—'}
-      </p>
+      {/* Big number with /10 context */}
+      <div className="flex items-baseline gap-1.5 mb-4">
+        <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none">
+          {avg !== null ? avg.toFixed(2) : '—'}
+        </p>
+        {avg !== null && (
+          <span className="text-base font-medium text-muted-foreground-2">/10</span>
+        )}
+      </div>
 
-      {/* Sparkline — grows to fill remaining space */}
+      {/* Sparkline — grows to fill */}
       {hasTrend ? (
         <div className="flex-1 min-h-[60px] -mx-5 mb-4">
           <ResponsiveContainer width="100%" height="100%">
@@ -255,7 +279,12 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
                   <stop offset="100%" stopColor={sentColor} stopOpacity={0}   />
                 </linearGradient>
               </defs>
+              <RechartsTooltip
+                content={<SentTooltip />}
+                cursor={{ stroke: sentColor, strokeWidth: 1, strokeDasharray: '3 3' }}
+              />
               <Area
+                type="monotone"
                 dataKey="v"
                 stroke={sentColor}
                 strokeWidth={2}
@@ -270,7 +299,7 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
         <div className="flex-1 min-h-[60px] mb-4" />
       )}
 
-      {/* Breakdown bars */}
+      {/* Breakdown bars — count + percentage, no footer */}
       <div className="space-y-2.5 pt-4 border-t border-card-line">
         {bars.map(b => (
           <div key={b.label} className="flex items-center gap-2">
@@ -281,16 +310,14 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
                 style={{ width: `${b.pct}%`, backgroundColor: b.barColor }}
               />
             </div>
-            <span className={cn('text-xs font-semibold w-8 text-right tabular-nums', b.txt)}>
+            <span className="text-[10px] text-muted-foreground-2 tabular-nums w-10 text-right shrink-0">
+              {b.count.toLocaleString('ca-ES')}
+            </span>
+            <span className={cn('text-xs font-semibold w-7 text-right tabular-nums shrink-0', b.txt)}>
               {b.pct.toFixed(0)}%
             </span>
           </div>
         ))}
-      </div>
-
-      <div className="flex justify-between mt-2.5 text-[10px] text-muted-foreground-2 tabular-nums">
-        <span>{positiu.toLocaleString('ca-ES')} positius</span>
-        <span>{negatiu.toLocaleString('ca-ES')} negatius</span>
       </div>
     </CardShell>
   );
@@ -308,20 +335,20 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
     return (
       <CardShell>
         <Skeleton className="h-3 w-32 mb-3" />
-        <Skeleton className="h-16 w-full rounded-xl mb-5" />
-        <div className="flex-1 space-y-2">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-10 w-full rounded-xl" />)}
+        <Skeleton className="h-10 w-24 mb-5" />
+        <div className="flex-1 space-y-2 pt-4 border-t border-card-line">
+          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10 w-full rounded-xl" />)}
         </div>
-        <Skeleton className="h-4 w-20 mt-4" />
       </CardShell>
     );
   }
 
   const criticalCount = stats?.critical_count ?? 0;
+  // Sort by most critical messages (DESC), not by avg_sentiment
   const criticalBarris = (stats?.by_barri ?? [])
     .filter(b => b.critical_count > 0)
-    .sort((a, b) => (a.avg_sentiment ?? 10) - (b.avg_sentiment ?? 10))
-    .slice(0, 4);
+    .sort((a, b) => b.critical_count - a.critical_count)
+    .slice(0, 5);
   const barrisCount = criticalBarris.length;
   const isOk = criticalCount === 0;
 
@@ -378,14 +405,6 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
           ))
         )}
       </div>
-
-      <Link
-        href="/alertes"
-        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors mt-4 shrink-0"
-      >
-        Veure totes
-        <ArrowUpRight className="w-3 h-3" />
-      </Link>
     </CardShell>
   );
 }
@@ -419,7 +438,6 @@ export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
 
   return (
     <CardShell>
-      {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <CardLabel accent="#7c3aed">Top categories</CardLabel>
         <span className="text-[10px] font-semibold text-muted-foreground-2 bg-muted-hover px-1.5 py-0.5 rounded-md">
@@ -427,7 +445,6 @@ export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
         </span>
       </div>
 
-      {/* Top category highlight */}
       <div className="rounded-xl px-3 py-2.5 mb-4 bg-primary/5 border border-primary/10">
         <p className="text-sm font-bold text-foreground leading-snug line-clamp-2">
           {top5[0]?.category ?? '—'}
@@ -442,7 +459,6 @@ export function CategoriesCard({ stats, loading }: CategoriesCardProps) {
         </div>
       </div>
 
-      {/* Horizontal bars — grow to fill */}
       <div className="flex-1 min-h-0 flex flex-col justify-between pt-4 border-t border-card-line">
         {top5.map((cat, i) => {
           const pct = (cat.count / maxCount) * 100;
