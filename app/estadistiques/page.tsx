@@ -47,7 +47,7 @@ export default function EstadistiquesPage() {
       const allRows = rows ?? [];
 
       // Client-side sentiment category filter
-      const filtered =
+      let filtered =
         filters.sentiments.length > 0
           ? allRows.filter(r => {
               const s = parseSentiment(r.sentiment);
@@ -55,6 +55,14 @@ export default function EstadistiquesPage() {
               return filters.sentiments.some(cat => sentimentMatches(s, cat));
             })
           : allRows;
+
+      // Critical alerts filter
+      if (filters.onlyAlerts) {
+        filtered = filtered.filter(r => {
+          const s = parseSentiment(r.sentiment);
+          return s !== null && s < 3.5;
+        });
+      }
 
       setStats(computeStats(filtered));
       setTimeline(computeTimeline(filtered, granularity));

@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { MultiSelect } from '@/components/ui/MultiSelect';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 
 export interface StatsFilters {
   barris: string[];
   canals: string[];
   clas1s: string[];
   sentiments: string[];
+  onlyAlerts: boolean;
 }
 
 export const EMPTY_FILTERS: StatsFilters = {
@@ -19,6 +21,7 @@ export const EMPTY_FILTERS: StatsFilters = {
   canals: [],
   clas1s: [],
   sentiments: [],
+  onlyAlerts: false,
 };
 
 interface Props {
@@ -68,7 +71,8 @@ export function FilterPanel({ filters, onChange, onReset }: Props) {
     filters.barris.length +
     filters.canals.length +
     filters.clas1s.length +
-    filters.sentiments.length;
+    filters.sentiments.length +
+    (filters.onlyAlerts ? 1 : 0);
 
   function set(key: keyof StatsFilters, values: string[]) {
     onChange({ ...filters, [key]: values });
@@ -93,7 +97,7 @@ export function FilterPanel({ filters, onChange, onReset }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <MultiSelect
           label="Barri"
           placeholder="Tots els barris"
@@ -127,6 +131,21 @@ export function FilterPanel({ filters, onChange, onReset }: Props) {
           searchable={false}
         />
       </div>
+
+      {/* Quick toggle: critical alerts only */}
+      <button
+        onClick={() => onChange({ ...filters, onlyAlerts: !filters.onlyAlerts })}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors',
+          filters.onlyAlerts
+            ? 'bg-red-50 border-red-200 text-red-600'
+            : 'bg-background-1 border-card-line text-muted-foreground-1 hover:bg-muted-hover',
+        )}
+      >
+        <AlertTriangle className="w-3.5 h-3.5" />
+        Alertes crítiques
+        {filters.onlyAlerts && <X className="w-3 h-3 ml-0.5" />}
+      </button>
     </Card>
   );
 }
