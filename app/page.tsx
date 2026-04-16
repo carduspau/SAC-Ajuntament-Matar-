@@ -12,7 +12,6 @@ import { QuickNav } from '@/components/inici/QuickNav';
 import { CategoriesChart } from '@/components/inici/CategoriesChart';
 import { CanalChart } from '@/components/inici/CanalChart';
 import { CriticalAlertsSection } from '@/components/inici/CriticalAlertsSection';
-import { HomeMapWidget } from '@/components/inici/HomeMapWidget';
 import { TimelineChart } from '@/components/charts/TimelineChart';
 import { HeatmapChart } from '@/components/charts/HeatmapChart';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -78,16 +77,13 @@ export default function InicioPage() {
       {/* Full-width Critical Alerts Section — only shown when there are critical messages */}
       <CriticalAlertsSection stats={stats} loading={statsLoading} />
 
-      {/* Neighbourhood map + Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <HomeMapWidget />
-        <Card>
-          <CardHeader>
-            <CardTitle>Mapa de calor: dia × hora</CardTitle>
-          </CardHeader>
-          <HeatmapChart data={stats?.heatmap ?? []} loading={statsLoading} />
-        </Card>
-      </div>
+      {/* Heatmap full width */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Mapa de calor: dia × hora</CardTitle>
+        </CardHeader>
+        <HeatmapChart data={stats?.heatmap ?? []} loading={statsLoading} />
+      </Card>
 
       {/* Alerts + Quick Nav */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
