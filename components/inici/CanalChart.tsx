@@ -75,7 +75,7 @@ export function CanalChart({ data, loading }: Props) {
       ) : chartData.length === 0 ? (
         <p className="text-sm text-muted-foreground-2 text-center py-10">Sense dades</p>
       ) : (
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
           {/* Donut */}
           <div className="shrink-0" style={{ width: 200, height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -116,7 +116,7 @@ export function CanalChart({ data, loading }: Props) {
           </div>
 
           {/* Custom legend */}
-          <div className="flex-1 min-w-0 space-y-2.5 py-2">
+          <div className="flex-1 min-w-0 w-full space-y-2.5 py-2">
             {chartData.map((entry) => (
               <div key={entry.name} className="flex items-center gap-2.5">
                 <span

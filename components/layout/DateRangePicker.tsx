@@ -13,11 +13,11 @@ import { useDateRange } from '@/context/DateRangeContext';
 import { cn } from '@/lib/utils';
 import type { PeriodType } from '@/types';
 
-const PERIODS: { value: PeriodType; label: string }[] = [
-  { value: 'day', label: 'Avui' },
-  { value: 'week', label: 'Setmana' },
-  { value: 'month', label: 'Mes' },
-  { value: 'year', label: 'Any' },
+const PERIODS: { value: PeriodType; label: string; short: string }[] = [
+  { value: 'day',   label: 'Avui',    short: 'Avui' },
+  { value: 'week',  label: 'Setmana', short: 'Set.' },
+  { value: 'month', label: 'Mes',     short: 'Mes'  },
+  { value: 'year',  label: 'Any',     short: 'Any'  },
 ];
 
 const WEEK_DAYS = ['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'];
@@ -118,13 +118,14 @@ export function DateRangePicker() {
             key={p.value}
             onClick={() => setPeriod(p.value)}
             className={cn(
-              'px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
+              'px-2.5 md:px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
               period === p.value
                 ? 'bg-layer text-foreground shadow-2xs'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            {p.label}
+            <span className="md:hidden">{p.short}</span>
+            <span className="hidden md:inline">{p.label}</span>
           </button>
         ))}
       </div>
@@ -150,7 +151,7 @@ export function DateRangePicker() {
 
         {/* Calendar panel */}
         {calOpen && (
-          <div className="absolute top-full right-0 mt-2 z-50 bg-card rounded-xl border border-card-line shadow-xl p-4 w-72">
+          <div className="absolute top-full right-0 mt-2 z-50 bg-card rounded-xl border border-card-line shadow-xl p-4 w-72 max-w-[calc(100vw-2rem)]">
             {/* Month navigation */}
             <div className="flex items-center justify-between mb-3">
               <button

@@ -21,7 +21,12 @@ const NAV_ITEMS = [
   { href: '/informes', label: 'Informes', icon: FileText },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const criticalCount = useCriticalCount();
@@ -29,23 +34,34 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex flex-col h-full bg-sidebar border-r border-sidebar-line transition-all duration-200 shrink-0',
-        collapsed ? 'w-16' : 'w-64'
+        'flex-col bg-sidebar border-r border-sidebar-line transition-all duration-200 shrink-0',
+        mobileOpen
+          ? 'fixed inset-y-0 left-0 z-50 flex h-full w-64'
+          : cn('hidden md:flex h-full', collapsed ? 'md:w-16' : 'md:w-64'),
       )}
     >
       {/* Logo */}
       <div className={cn(
         'flex items-center gap-3 px-5 py-5 border-b border-sidebar-line',
-        collapsed && 'justify-center px-2'
+        collapsed && !mobileOpen && 'justify-center px-2'
       )}>
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-2xs">
           <span className="text-primary-foreground text-xs font-bold tracking-tight">SAC</span>
         </div>
-        {!collapsed && (
-          <div>
+        {(!collapsed || mobileOpen) && (
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground leading-none">SAC</p>
             <p className="text-xs text-muted-foreground-2 mt-0.5">Ajuntament Mataró</p>
           </div>
+        )}
+        {/* Close button — mobile only */}
+        {mobileOpen && (
+          <button
+            onClick={onMobileClose}
+            className="p-1.5 rounded-lg hover:bg-muted-hover text-muted-foreground transition-colors shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
         )}
       </div>
 
@@ -110,8 +126,8 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Collapse toggle */}
-      <div className="border-t border-sidebar-divider p-2">
+      {/* Collapse toggle — desktop only */}
+      <div className="border-t border-sidebar-divider p-2 hidden md:block">
         <button
           onClick={() => setCollapsed(c => !c)}
           className={cn(
