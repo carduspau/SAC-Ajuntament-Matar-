@@ -206,10 +206,10 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
   const avg = stats?.avg_sentiment ?? null;
 
   const sentCat =
-    avg === null ? { label: '—',       textCls: 'text-muted-foreground-2', bgCls: 'bg-muted-hover',  accent: '#94a3b8' } :
-    avg >= 6     ? { label: 'Positiu',  textCls: 'text-emerald-600',        bgCls: 'bg-emerald-50',   accent: '#10b981' } :
-    avg >= 3.5   ? { label: 'Neutre',   textCls: 'text-amber-500',          bgCls: 'bg-amber-50',     accent: '#f59e0b' } :
-                   { label: 'Negatiu',  textCls: 'text-red-500',            bgCls: 'bg-red-50',       accent: '#ef4444' };
+    avg === null ? { label: '—',       textCls: 'text-muted-foreground-2', accent: '#94a3b8' } :
+    avg >= 6     ? { label: 'Positiu',  textCls: 'text-emerald-600',        accent: '#10b981' } :
+    avg >= 3.5   ? { label: 'Neutre',   textCls: 'text-amber-500',          accent: '#f59e0b' } :
+                   { label: 'Negatiu',  textCls: 'text-red-500',            accent: '#ef4444' };
 
   const dist = stats?.sentiment_distribution ?? [];
   const negatiu = dist.filter(d => ['0–1','1–2','2–3','3–4'].includes(d.range)).reduce((s, d) => s + d.count, 0);
@@ -233,8 +233,8 @@ export function SentimentCard({ stats, timeline, loading }: SentimentCardProps) 
     <CardShell>
       <CardLabel accent={sentCat.accent}>Sentiment del període</CardLabel>
 
-      {/* Score + badge in tinted block */}
-      <div className={cn('flex items-center justify-between rounded-xl px-3 py-2.5 mb-4', sentCat.bgCls)}>
+      {/* Score + badge */}
+      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 mb-4 bg-background-1 border border-card-line">
         <p className="text-[2.4rem] font-extrabold tracking-tight text-foreground leading-none">
           {avg !== null ? avg.toFixed(2) : '—'}
         </p>
@@ -333,10 +333,7 @@ export function AlertesCard({ stats, loading }: AlertesCardProps) {
       </div>
 
       {/* Count block */}
-      <div className={cn(
-        'rounded-xl px-3 py-2.5 mb-4 flex items-center justify-between',
-        isOk ? 'bg-emerald-50' : 'bg-red-50',
-      )}>
+      <div className="rounded-xl px-3 py-2.5 mb-4 flex items-center justify-between bg-background-1 border border-card-line">
         <div>
           <p className={cn(
             'text-[2.4rem] font-extrabold tracking-tight leading-none',
