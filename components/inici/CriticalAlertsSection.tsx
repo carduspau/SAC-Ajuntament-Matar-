@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { AlertTriangle } from 'lucide-react';
 import {
@@ -18,7 +19,6 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 import type { StatsResponse, SacMessage } from '@/types';
-import { MessageDetail } from '@/components/missatges/MessageDetail';
 
 const CriticalAlertsSectionMap = dynamic(
   () =>
@@ -54,9 +54,9 @@ function severityBarColor(avgSentiment: number | null): string {
 
 export function CriticalAlertsSection({ stats, loading }: Props) {
   const { from, to } = useDateRange();
+  const router = useRouter();
   const [mapPoints, setMapPoints] = useState<SacMessage[]>([]);
   const [critCategories, setCritCategories] = useState<CritCategory[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<SacMessage | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -88,7 +88,7 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
       const sorted = Array.from(catMap.entries())
         .map(([cat, count]) => ({ cat, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
+        .slice(0, 8);
 
       setCritCategories(sorted);
     }
@@ -98,15 +98,9 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
 
   if (!stats || stats.critical_count === 0) return null;
 
-  const topBarris = stats.by_barri
-    .filter((b) => b.critical_count > 0)
+  const topBarris = [...stats.by_barri]
     .sort((a, b) => b.critical_count - a.critical_count)
-    .slice(0, 6);
-
-  const topBarrisChart = stats.by_barri
-    .filter((b) => b.critical_count > 0)
-    .sort((a, b) => b.critical_count - a.critical_count)
-    .slice(0, 5);
+    .slice(0, 8);
 
   return (
     <section className="space-y-4">
@@ -173,21 +167,20 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
               <CardTitle>Mapa d&apos;alertes</CardTitle>
             </CardHeader>
           </div>
-          <div className="flex-1 min-h-0">
-            <CriticalAlertsSectionMap points={mapPoints} onSelect={setSelectedMessage} />
+          <div className="flex-1 min-h-0 cursor-pointer" onClick={() => router.push('/alertes')}>
+            <CriticalAlertsSectionMap points={mapPoints} />
           </div>
         </Card>
 
-        {/* Column 3: Charts */}
+        {/* Column 3: Per categoria */}
         <Card>
-          {/* Top: Per categoria */}
           <CardHeader>
             <CardTitle>Per categoria</CardTitle>
           </CardHeader>
           {critCategories.length === 0 ? (
-            <Skeleton className="h-[140px] w-full" />
+            <Skeleton className="h-[280px] w-full" />
           ) : (
-            <ResponsiveContainer width="100%" height={140}>
+            <ResponsiveContainer width="100%" height={280}>
               <BarChart
                 data={critCategories}
                 layout="vertical"
@@ -198,7 +191,7 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
                   type="category"
                   dataKey="cat"
                   tick={{ fontSize: 10 }}
-                  width={90}
+                  width={110}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -214,50 +207,8 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
               </BarChart>
             </ResponsiveContainer>
           )}
-
-          {/* Divider */}
-          <div className="border-t border-card-line my-3" />
-
-          {/* Bottom: Per barri */}
-          <CardHeader>
-            <CardTitle>Per barri</CardTitle>
-          </CardHeader>
-          {topBarrisChart.length === 0 ? (
-            <Skeleton className="h-[140px] w-full" />
-          ) : (
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart
-                data={topBarrisChart.map((b) => ({
-                  name: b.barri,
-                  count: b.critical_count,
-                }))}
-                layout="vertical"
-                margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
-              >
-                <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 10 }}
-                  width={90}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{ fontSize: 11 }}
-                  formatter={(value: number) => [value, 'Crítics']}
-                />
-                <Bar dataKey="count" radius={[0, 3, 3, 0]}>
-                  {topBarrisChart.map((_, index) => (
-                    <Cell key={`cell-barri-${index}`} fill="#f97316" />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
         </Card>
       </div>
-      <MessageDetail message={selectedMessage} onClose={() => setSelectedMessage(null)} />
     </section>
   );
 }
