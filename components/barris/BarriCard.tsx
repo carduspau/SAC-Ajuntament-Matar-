@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge, SentimentBadge } from '@/components/ui/Badge';
 import { SparklineChart } from '@/components/charts/SparklineChart';
@@ -18,15 +17,13 @@ interface Props {
 }
 
 export function BarriCard({ stat, from, to, maxCount }: Props) {
-  const [expanded, setExpanded] = useState(false);
   const [timeline, setTimeline] = useState<{ value: number }[]>([]);
   const [canals, setCanals] = useState<{ canal: string; count: number }[]>([]);
-  const [loadingExpand, setLoadingExpand] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!expanded) return;
     let cancelled = false;
-    setLoadingExpand(true);
+    setLoading(true);
 
     (async () => {
       const { data } = await supabase
@@ -45,17 +42,18 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
           const c = row.canal ?? 'Desconegut';
           canalMap.set(c, (canalMap.get(c) ?? 0) + 1);
         }
-        const sorted = Array.from(canalMap.entries())
-          .map(([canal, count]) => ({ canal, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 4);
-        setCanals(sorted);
+        setCanals(
+          Array.from(canalMap.entries())
+            .map(([canal, count]) => ({ canal, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 4)
+        );
       }
-      if (!cancelled) setLoadingExpand(false);
+      if (!cancelled) setLoading(false);
     })();
 
     return () => { cancelled = true; };
-  }, [expanded, stat.barri, from.toISOString(), to.toISOString()]);
+  }, [stat.barri, from.toISOString(), to.toISOString()]);
 
   const pct = maxCount > 0 ? (stat.count / maxCount) * 100 : 0;
 
@@ -84,53 +82,42 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
         </div>
       </div>
 
-      <button
-        onClick={() => setExpanded(v => !v)}
-        className="flex items-center gap-1 text-xs text-primary hover:text-primary-hover transition-colors focus:outline-none"
-      >
-        {expanded
-          ? <><ChevronUp className="w-3 h-3" /> Menys detall</>
-          : <><ChevronDown className="w-3 h-3" /> Veure evolució</>}
-      </button>
+      <div className="border-t border-card-line pt-3 space-y-4">
+        {loading ? (
+          <p className="text-xs text-muted-foreground-2 text-center py-4">Carregant...</p>
+        ) : (
+          <>
+            {timeline.length > 0 ? (
+              <div>
+                <p className="text-xs text-muted-foreground font-medium mb-2">Evolució diària</p>
+                <SparklineChart data={timeline} color={sentimentColor(stat.avg_sentiment)} height={60} />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground-2 text-center py-2">Sense dades en aquest període</p>
+            )}
 
-      {expanded && (
-        <div className="border-t border-card-line pt-3 space-y-4">
-          {loadingExpand ? (
-            <p className="text-xs text-muted-foreground-2 text-center py-4">Carregant...</p>
-          ) : (
-            <>
-              {timeline.length > 0 ? (
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium mb-2">Evolució diària</p>
-                  <SparklineChart data={timeline} color={sentimentColor(stat.avg_sentiment)} height={60} />
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground-2 text-center py-2">Sense dades en aquest període</p>
-              )}
-
-              {canals.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium mb-2">Per canal</p>
-                  <div className="space-y-1.5">
-                    {canals.map(({ canal, count }) => (
-                      <div key={canal} className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground-1 w-32 truncate shrink-0">{canal}</span>
-                        <div className="flex-1 h-1.5 bg-muted-hover rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary/60 rounded-full"
-                            style={{ width: `${(count / stat.count) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground w-6 text-right shrink-0">{count}</span>
+            {canals.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground font-medium mb-2">Per canal</p>
+                <div className="space-y-1.5">
+                  {canals.map(({ canal, count }) => (
+                    <div key={canal} className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground-1 w-32 truncate shrink-0">{canal}</span>
+                      <div className="flex-1 h-1.5 bg-muted-hover rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary/60 rounded-full"
+                          style={{ width: `${(count / stat.count) * 100}%` }}
+                        />
                       </div>
-                    ))}
-                  </div>
+                      <span className="text-xs text-muted-foreground w-6 text-right shrink-0">{count}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </Card>
   );
 }
