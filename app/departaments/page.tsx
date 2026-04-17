@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
   BarChart, Bar, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip,
-  PieChart, Pie, ScatterChart, Scatter, ZAxis, CartesianGrid, Legend,
+  PieChart, Pie, Legend,
 } from 'recharts';
 import { Building2, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -113,18 +113,6 @@ export default function DepartamentsPage() {
   const depts = data?.by_department ?? [];
   const maxCount = depts[0]?.count ?? 1;
 
-  // Scatter data: x=avg_sentiment, y=followup_pct, z=count
-  const scatterData = depts
-    .filter(d => d.avg_sentiment !== null)
-    .map(d => ({
-      dept: d.dept,
-      x: d.avg_sentiment!,
-      y: d.followup_pct,
-      z: d.count,
-      label: deptMeta(d.dept).label,
-      hex: deptMeta(d.dept).hex,
-    }));
-
   // Stacked bar: intent by dept (top 7 depts)
   const stackedData = depts.slice(0, 7).map(d => ({
     dept: deptMeta(d.dept).label,
@@ -148,65 +136,24 @@ export default function DepartamentsPage() {
         </div>
       )}
 
-      {/* Row 1: Dept bar + Scatter bubble */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Horizontal bar: missatges per dept */}
-        <Card>
-          <CardHeader><CardTitle>Missatges per departament</CardTitle></CardHeader>
-          {loading ? <Skeleton className="h-72 w-full" /> : (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={depts.map(d => ({ name: deptMeta(d.dept).label, count: d.count, hex: deptMeta(d.dept).hex }))}
-                layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis dataKey="name" type="category" width={145} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                  contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
-                  {depts.map((d, i) => <Cell key={i} fill={deptMeta(d.dept).hex} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Card>
-
-        {/* Scatter: sentiment vs followup% (bubble size = count) */}
-        <Card>
-          <CardHeader><CardTitle>Sentiment vs seguiment pendent (%)</CardTitle></CardHeader>
-          {loading ? <Skeleton className="h-72 w-full" /> : (
-            <>
-              <ResponsiveContainer width="100%" height={270}>
-                <ScatterChart margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis type="number" dataKey="x" name="Sentiment" domain={[0, 10]}
-                    tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
-                    label={{ value: 'Sentiment', position: 'insideBottom', offset: -4, fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis type="number" dataKey="y" name="Seguiment" unit="%" domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={40} />
-                  <ZAxis type="number" dataKey="z" range={[40, 500]} name="Missatges" />
-                  <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const d = payload[0].payload as typeof scatterData[0];
-                    return (
-                      <div className="bg-card border border-card-line rounded-lg px-3 py-2 shadow-xs text-xs space-y-0.5">
-                        <p className="font-bold text-foreground">{d.label}</p>
-                        <p className="text-muted-foreground-2">Sentiment: <span className="font-medium text-foreground">{d.x.toFixed(1)}</span></p>
-                        <p className="text-muted-foreground-2">Seguiment: <span className="font-medium text-foreground">{d.y.toFixed(0)}%</span></p>
-                        <p className="text-muted-foreground-2">Missatges: <span className="font-medium text-foreground">{d.z.toLocaleString('ca-ES')}</span></p>
-                      </div>
-                    );
-                  }} />
-                  <Scatter data={scatterData} fill="#6366f1">
-                    {scatterData.map((d, i) => <Cell key={i} fill={d.hex} fillOpacity={0.8} />)}
-                  </Scatter>
-                </ScatterChart>
-              </ResponsiveContainer>
-              <p className="text-[10px] text-muted-foreground-2 text-center -mt-2 pb-1">
-                La mida de la bombolla representa el volum de missatges
-              </p>
-            </>
-          )}
-        </Card>
-      </div>
+      {/* Row 1: Dept bar (full width) */}
+      <Card>
+        <CardHeader><CardTitle>Missatges per departament</CardTitle></CardHeader>
+        {loading ? <Skeleton className="h-72 w-full" /> : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={depts.map(d => ({ name: deptMeta(d.dept).label, count: d.count, hex: deptMeta(d.dept).hex }))}
+              layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+              <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="name" type="category" width={145} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
+                {depts.map((d, i) => <Cell key={i} fill={deptMeta(d.dept).hex} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
 
       {/* Row 2: Stacked bar intent per dept */}
       <Card>
