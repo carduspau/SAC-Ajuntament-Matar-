@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip,
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from 'recharts';
 import {
   MissatgesCard, SentimentCard, AlertesCard, CategoriesCard,
@@ -20,11 +20,10 @@ import { useStats } from '@/hooks/useStats';
 import { useTimeline } from '@/hooks/useTimeline';
 import { useEnrichedStats } from '@/hooks/useEnrichedStats';
 import { useDateRange } from '@/context/DateRangeContext';
-import { INTENT_META, EXPERIENCE_META, LANGUAGE_META, intentMeta, experienceMeta, languageMeta } from '@/lib/intentColors';
+import { intentMeta, languageMeta } from '@/lib/intentColors';
 import { cn } from '@/lib/utils';
 
 const INTENT_ORDER = ['queixa', 'incidència', 'consulta', 'sol·licitud', 'suggeriment', 'agraïment'];
-const EXP_ORDER    = ['primera_interacció', 'reincident_satisfet', 'reincident_frustrat'];
 
 export default function InicioPage() {
   const { data: stats, loading: statsLoading } = useStats();
@@ -39,12 +38,7 @@ export default function InicioPage() {
     .map(k => ({ name: intentMeta(k).label, value: enriched?.by_intent.find(i => i.key === k)?.count ?? 0, hex: intentMeta(k).hex }))
     .filter(d => d.value > 0);
 
-  // Experience bar data
-  const expBar = EXP_ORDER
-    .map(k => ({ name: experienceMeta(k).label, value: enriched?.by_experience.find(e => e.key === k)?.count ?? 0, hex: experienceMeta(k).hex }))
-    .filter(d => d.value > 0);
-
-  // Language pills
+  // Language data
   const langData = enriched?.by_language ?? [];
 
   return (
@@ -89,7 +83,10 @@ export default function InicioPage() {
                     <Pie data={intentPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
                       {intentPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                    <Tooltip
+                      formatter={(v: number, _: unknown, props: { payload?: { name?: string } }) => [
+                        v.toLocaleString('ca-ES'), props.payload?.name ?? 'Missatges'
+                      ]}
                       contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -106,42 +103,25 @@ export default function InicioPage() {
             )}
           </Card>
 
-          {/* Experience signal bar */}
+          {/* Language distribution */}
           <Card>
-            <CardHeader><CardTitle>Experiència ciutadana</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Distribució per idioma</CardTitle></CardHeader>
             {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (
-              <div className="space-y-4 pt-2">
-                {expBar.map(d => {
-                  const total = expBar.reduce((s, x) => s + x.value, 0);
-                  const pct = total > 0 ? (d.value / total) * 100 : 0;
+              <div className="flex flex-col gap-4 pt-1">
+                {langData.map(l => {
+                  const m = languageMeta(l.key);
                   return (
-                    <div key={d.name}>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-medium text-foreground">{d.name}</span>
-                        <span className="text-muted-foreground-2">{d.value.toLocaleString('ca-ES')} ({pct.toFixed(0)}%)</span>
+                    <div key={l.key}>
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className={cn('font-semibold px-2 py-0.5 rounded-full', m.bg, m.text)}>{m.label}</span>
+                        <span className="text-muted-foreground-2">{l.count.toLocaleString('ca-ES')} ({l.pct.toFixed(0)}%)</span>
                       </div>
-                      <div className="h-2 bg-muted-hover rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: d.hex }} />
+                      <div className="h-2.5 bg-muted-hover rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${l.pct}%`, backgroundColor: m.hex }} />
                       </div>
                     </div>
                   );
                 })}
-
-                {/* Language split */}
-                <div className="pt-2 border-t border-card-line">
-                  <p className="text-xs font-medium text-muted-foreground-2 mb-2 uppercase tracking-wide">Idioma</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {langData.map(l => {
-                      const m = languageMeta(l.key);
-                      return (
-                        <span key={l.key} className={cn('inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold', m.bg, m.text)}>
-                          {m.label}
-                          <span className="font-bold">{l.pct.toFixed(0)}%</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             )}
           </Card>
