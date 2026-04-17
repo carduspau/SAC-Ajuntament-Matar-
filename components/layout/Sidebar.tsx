@@ -87,7 +87,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             >
               <Icon className={cn(
                 'w-5 h-5 shrink-0',
-                active ? 'text-primary' : isAlertes ? 'text-red-500' : 'text-muted-foreground'
+                active ? 'text-primary' : 'text-muted-foreground'
               )} />
               {!collapsed && (
                 <>
