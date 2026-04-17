@@ -172,10 +172,10 @@ export default function EstadistiquesPage() {
         </Card>
       )}
 
-      {/* ── Nous camps inferits per IA ── */}
+      {/* ── Classificació i gestió ── */}
       <section className="space-y-4 pt-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-foreground">Camps inferits per IA</h2>
+          <h2 className="text-sm font-semibold text-foreground">Classificació i gestió</h2>
           <span className="text-xs text-muted-foreground-2 bg-muted-hover px-2 py-0.5 rounded-full">intent · departament · acció · experiència · idioma · seguiment</span>
         </div>
 

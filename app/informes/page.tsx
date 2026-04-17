@@ -144,7 +144,7 @@ export default function InformesPage() {
                 onClick={generateAISummary}
                 loading={generatingAI}
               >
-                Generar resum IA
+                Generar resum executiu
               </Button>
               <Button
                 variant="primary"
@@ -182,7 +182,7 @@ export default function InformesPage() {
             <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-xs font-semibold text-primary">Resum generat per IA</span>
+                <span className="text-xs font-semibold text-primary">Resum executiu</span>
               </div>
               <p className="text-sm text-muted-foreground-1 leading-relaxed">{aiSummary}</p>
             </div>
@@ -229,7 +229,7 @@ export default function InformesPage() {
         {/* AI Summary */}
         {aiSummary && (
           <div style={{ background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: '#4f46e5', marginBottom: '8px' }}>Resum executiu (IA)</p>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: '#4f46e5', marginBottom: '8px' }}>Resum executiu</p>
             <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6 }}>{aiSummary}</p>
           </div>
         )}
