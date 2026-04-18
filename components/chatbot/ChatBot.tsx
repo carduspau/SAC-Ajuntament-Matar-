@@ -1,12 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { ChatPanel } from './ChatPanel';
 import { cn } from '@/lib/utils';
 
 export function ChatBot() {
   const [open, setOpen] = useState(false);
+
+  // Prevent body scroll when drawer is open on mobile
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
   return (
     <>
@@ -20,20 +30,33 @@ export function ChatBot() {
           'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2',
           open && 'scale-90'
         )}
-        aria-label="Obrir xatbot"
+        aria-label="Obrir assistent SAC"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </button>
 
-      {/* Chat panel */}
+      {/* Backdrop (mobile) */}
+      <div
+        onClick={() => setOpen(false)}
+        className={cn(
+          'fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300',
+          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        aria-hidden="true"
+      />
+
+      {/* Side drawer */}
       <div
         className={cn(
-          'fixed bottom-24 right-6 z-50 w-96 h-[32rem]',
-          'transition-all duration-300 ease-in-out',
-          open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'
+          'fixed top-0 right-0 z-40 h-full w-full sm:w-[480px] lg:w-[520px]',
+          'transition-transform duration-300 ease-in-out',
+          open ? 'translate-x-0' : 'translate-x-full'
         )}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Assistent SAC"
       >
-        <ChatPanel />
+        <ChatPanel onClose={() => setOpen(false)} />
       </div>
     </>
   );

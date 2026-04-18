@@ -28,7 +28,7 @@ interface MockResponse {
 function generateMockResponse(userMessage: string, stats: ChatStats): MockResponse {
   const msg = userMessage.toLowerCase();
 
-  if (msg.includes('barri') || msg.includes('cerdanyola') || msg.includes('eixample') || msg.includes('barris')) {
+  if (msg.includes('barri') || msg.includes('cerdanyola') || msg.includes('eixample') || msg.includes('barris') || msg.includes('zona')) {
     const barriData = Object.entries(stats.byBarri)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
@@ -41,19 +41,19 @@ function generateMockResponse(userMessage: string, stats: ChatStats): MockRespon
     };
   }
 
-  if (msg.includes('canal') || msg.includes('telèfon') || msg.includes('web') || msg.includes('canals')) {
+  if (msg.includes('canal') || msg.includes('telèfon') || msg.includes('web') || msg.includes('canals') || msg.includes('via')) {
     const canalData = Object.entries(stats.byCanal)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }));
     return {
-      content: `El canal principal és **"${stats.topCanal ?? 'N/D'}"**. Total de ${stats.total ?? 0} missatges en el període.`,
+      content: `El canal principal és **"${stats.topCanal ?? 'N/D'}"**. Total de **${stats.total ?? 0}** missatges en el període.`,
       chart: canalData.length > 0
         ? { type: 'pie', title: 'Distribució per canal', data: canalData }
         : undefined,
     };
   }
 
-  if (msg.includes('categoria') || msg.includes('categories') || msg.includes('tipus')) {
+  if (msg.includes('categoria') || msg.includes('categories') || msg.includes('tipus') || msg.includes('servei')) {
     const clas1Data = stats.byClas1
       ? Object.entries(stats.byClas1)
           .sort((a, b) => b[1] - a[1])
@@ -61,29 +61,48 @@ function generateMockResponse(userMessage: string, stats: ChatStats): MockRespon
           .map(([name, value]) => ({ name, value }))
       : [];
     return {
-      content: `La categoria principal és **"${stats.topCategory ?? 'N/D'}"**.`,
+      content: `La categoria principal és **"${stats.topCategory ?? 'N/D'}"**. El gràfic mostra les 8 categories amb més volum:`,
       chart: clas1Data.length > 0
         ? { type: 'bar', title: 'Missatges per categoria', data: clas1Data }
         : undefined,
     };
   }
 
-  if (msg.includes('sentiment') || msg.includes('negatiu') || msg.includes('positiu')) {
+  if (msg.includes('sentiment') || msg.includes('negatiu') || msg.includes('positiu') || msg.includes('satisfacci') || msg.includes('experiència')) {
+    const sentVal = stats.avgSentiment;
+    const sentLabel = sentVal === null ? 'N/D' : sentVal >= 7 ? 'positiu' : sentVal >= 4 ? 'neutre' : 'negatiu';
     return {
-      content: `Basant-me en les dades del període, el sentiment mitjà és de **${
-        stats.avgSentiment ? stats.avgSentiment.toFixed(1) : 'N/D'
-      }/10**. Hi ha ${stats.criticalCount ?? 0} missatges crítics (sentiment < 3).\n\n⚠️ Resposta d'exemple. Configura la clau d'API d'OpenAI per respostes reals.`,
+      content: `El sentiment mitjà és de **${sentVal !== null ? sentVal.toFixed(1) : 'N/D'}/10** (${sentLabel}). Hi ha **${stats.criticalCount}** missatges crítics (sentiment < 3).\n\nEls missatges crítics requereixen atenció prioritària.\n\n⚠️ Resposta d'exemple. Configura la clau d'API d'OpenAI per a respostes reals.`,
     };
   }
 
-  if (msg.includes('alerta') || msg.includes('urgent') || msg.includes('crític')) {
+  if (msg.includes('alerta') || msg.includes('urgent') || msg.includes('crític') || msg.includes('prioritari')) {
     return {
-      content: `Hi ha **${stats.criticalCount ?? 0}** missatges amb sentiment crític (< 3) que requereixen atenció prioritària. Pots veure el detall a la secció "Alertes crítiques".\n\n⚠️ Resposta d'exemple.`,
+      content: `Hi ha **${stats.criticalCount}** missatges amb sentiment crític (< 3) que requereixen atenció prioritària.\n\nPots veure el detall a la secció **"Alertes crítiques"** del dashboard.\n\n⚠️ Resposta d'exemple.`,
+    };
+  }
+
+  if (msg.includes('resum') || msg.includes('general') || msg.includes('total') || msg.includes('overview') || msg.includes('dades')) {
+    const barriData = Object.entries(stats.byBarri)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, value]) => ({ name, value }));
+    return {
+      content: `**Resum del període:**\n• Total missatges: **${stats.total}**\n• Sentiment mitjà: **${stats.avgSentiment !== null ? stats.avgSentiment.toFixed(1) : 'N/D'}/10**\n• Missatges crítics: **${stats.criticalCount}**\n• Barri principal: **${stats.topBarri ?? 'N/D'}**\n• Canal principal: **${stats.topCanal ?? 'N/D'}**\n• Categoria principal: **${stats.topCategory ?? 'N/D'}**\n\n⚠️ Resposta d'exemple.`,
+      chart: barriData.length > 0
+        ? { type: 'bar', title: 'Top barris', data: barriData }
+        : undefined,
+    };
+  }
+
+  if (msg.includes('tendència') || msg.includes('evolució') || msg.includes('temps') || msg.includes('trend')) {
+    return {
+      content: `Per veure l'evolució temporal dels missatges, consulta la secció **"Tendències"** del dashboard, on trobaràs gràfics de línia i àrea amb la distribució per períodes.\n\nActualment hi ha **${stats.total}** missatges en el rang de dates seleccionat.\n\n⚠️ Resposta d'exemple.`,
     };
   }
 
   return {
-    content: `He rebut la teva consulta. El dashboard mostra **${stats.total ?? 0}** missatges en el període seleccionat.\n\nPots preguntar-me sobre: barris, canals, categories, sentiments, alertes.\n\n⚠️ Aquesta és una resposta d'exemple. Per activar el xatbot real, configura la clau d'API d'OpenAI.`,
+    content: `He rebut la teva consulta. El dashboard mostra **${stats.total ?? 0}** missatges en el període seleccionat.\n\nPots preguntar-me sobre:\n• Barris i zones\n• Canals de comunicació\n• Categories i serveis\n• Sentiment i satisfacció\n• Alertes crítiques\n• Resum general\n\n⚠️ Configura la clau d'API d'OpenAI per a respostes personalitzades.`,
   };
 }
 
@@ -119,23 +138,39 @@ export async function POST(req: NextRequest) {
 Context de dades actuals (${filters?.from ? new Date(filters.from).toLocaleDateString('ca-ES') : ''} - ${filters?.to ? new Date(filters.to).toLocaleDateString('ca-ES') : ''}):
 - Total missatges: ${stats.total}
 - Sentiment mitjà: ${stats.avgSentiment !== null ? stats.avgSentiment.toFixed(2) + '/10' : 'N/D'}
-- Missatges crítics: ${stats.criticalCount}
+- Missatges crítics (sentiment < 3): ${stats.criticalCount}
 - Barri principal: ${stats.topBarri ?? 'N/D'}
 - Canal principal: ${stats.topCanal ?? 'N/D'}
 - Categoria principal: ${stats.topCategory ?? 'N/D'}
-- Barris (top 5): ${JSON.stringify(stats.byBarri)}
-- Canals: ${JSON.stringify(stats.byCanal)}
+- Distribució per barris: ${JSON.stringify(stats.byBarri)}
+- Distribució per canals: ${JSON.stringify(stats.byCanal)}
+- Distribució per categories: ${JSON.stringify(stats.byClas1 ?? {})}
 
-Respon SEMPRE en format JSON amb aquesta estructura exacta:
-{ "content": "text de la resposta en català", "chart": null }
+IMPORTANT: Respon SEMPRE en format JSON vàlid amb aquesta estructura exacta:
+{
+  "content": "text de la resposta en català (usa **negreta** per ressaltar valors importants)",
+  "chart": null
+}
 
-Si la pregunta és sobre barris, respon amb:
-{ "content": "text en català", "chart": { "type": "bar", "title": "Missatges per barri", "data": [{"name": "Barri", "value": N}] } }
+Per a preguntes sobre barris o categories, inclou un gràfic de barres:
+{
+  "content": "text en català",
+  "chart": { "type": "bar", "title": "Títol del gràfic", "data": [{"name": "Nom", "value": N}] }
+}
 
-Si la pregunta és sobre canals, respon amb:
-{ "content": "text en català", "chart": { "type": "pie", "title": "Per canal", "data": [{"name": "Canal", "value": N}] } }
+Per a preguntes sobre canals, inclou un gràfic de pastís:
+{
+  "content": "text en català",
+  "chart": { "type": "pie", "title": "Títol", "data": [{"name": "Canal", "value": N}] }
+}
 
-Sigues concís i usa dades concretes.`;
+Per a preguntes sobre evolució temporal, usa tipus "area" o "line":
+{
+  "content": "text en català",
+  "chart": { "type": "area", "title": "Títol", "data": [{"name": "Període", "value": N}] }
+}
+
+Sigues concís, usa dades concretes i respon en català.`;
 
   try {
     const { OpenAI } = await import('openai');
@@ -147,7 +182,7 @@ Sigues concís i usa dades concretes.`;
         ...messages,
       ],
       temperature: 0.3,
-      max_tokens: 600,
+      max_tokens: 800,
       response_format: { type: 'json_object' },
     });
 
