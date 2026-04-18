@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Cell,
 } from 'recharts';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartDownloadButtons, downloadPng, downloadCsv } from '@/components/ui/ChartDownload';
 import { Tag } from 'lucide-react';
 import { getCategoryColor } from '@/lib/categoryColors';
 import type { CategoryStat } from '@/types';
@@ -17,7 +18,13 @@ interface Props {
 }
 
 export function CategoriesChart({ data, loading }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
   const top8 = data.slice(0, 8);
+
+  const csvData = top8.map(d => ({
+    Categoria: d.category,
+    Missatges: d.count,
+  }));
 
   return (
     <Card>
@@ -26,6 +33,10 @@ export function CategoriesChart({ data, loading }: Props) {
           <Tag className="w-4 h-4 text-primary" />
           Categories principals
         </CardTitle>
+        <ChartDownloadButtons
+          onPng={() => ref.current && downloadPng(ref.current, 'categories-principals')}
+          onCsv={() => downloadCsv('categories-principals', csvData)}
+        />
       </CardHeader>
 
       {loading ? (
@@ -33,32 +44,34 @@ export function CategoriesChart({ data, loading }: Props) {
       ) : top8.length === 0 ? (
         <p className="text-sm text-muted-foreground-2 text-center py-8">Sense dades</p>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart
-            data={top8}
-            layout="vertical"
-            margin={{ top: 0, right: 16, bottom: 0, left: 0 }}
-          >
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-            <YAxis
-              type="category"
-              dataKey="category"
-              width={130}
-              tick={{ fontSize: 11, fill: '#475569' }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }}
-              formatter={(value: number) => [value.toLocaleString('ca-ES'), 'Missatges']}
-            />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
-              {top8.map((entry, i) => (
-                <Cell key={i} fill={getCategoryColor(entry.category)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div ref={ref}>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart
+              data={top8}
+              layout="vertical"
+              margin={{ top: 0, right: 16, bottom: 0, left: 0 }}
+            >
+              <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis
+                type="category"
+                dataKey="category"
+                width={130}
+                tick={{ fontSize: 11, fill: '#475569' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }}
+                formatter={(value: number) => [value.toLocaleString('ca-ES'), 'Missatges']}
+              />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
+                {top8.map((entry, i) => (
+                  <Cell key={i} fill={getCategoryColor(entry.category)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </Card>
   );

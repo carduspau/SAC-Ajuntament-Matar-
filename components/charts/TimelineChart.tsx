@@ -9,6 +9,7 @@ import { format, parseISO } from 'date-fns';
 import { ca } from 'date-fns/locale';
 import type { TimelineBucket, TimelineGranularity } from '@/types';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 
 interface Props {
   data: TimelineBucket[];
@@ -16,6 +17,7 @@ interface Props {
   granularity?: TimelineGranularity;
   height?: number;
   showSentiment?: boolean;
+  title?: string;
 }
 
 function formatBucket(bucket: string, granularity: TimelineGranularity = 'day'): string {
@@ -44,7 +46,7 @@ const CustomTooltip = ({ active, payload, label, granularity }: any) => {
   );
 };
 
-export function TimelineChart({ data, loading, granularity = 'day', height = 280, showSentiment = true }: Props) {
+export function TimelineChart({ data, loading, granularity = 'day', height = 280, showSentiment = true, title }: Props) {
   if (loading) return <Skeleton className={`w-full`} style={{ height }} />;
 
   const chartData = data.map(d => ({
@@ -53,7 +55,13 @@ export function TimelineChart({ data, loading, granularity = 'day', height = 280
     'Sentiment mitjà': d.avg_sentiment !== null ? parseFloat(d.avg_sentiment.toFixed(2)) : null,
   }));
 
-  return (
+  const csvData = data.map(d => ({
+    Data: formatBucket(d.bucket, granularity),
+    Missatges: d.count,
+    ...(showSentiment && d.avg_sentiment !== null ? { 'Sentiment_mitja': d.avg_sentiment.toFixed(2) } : {}),
+  }));
+
+  const chart = (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
         <defs>
@@ -117,4 +125,13 @@ export function TimelineChart({ data, loading, granularity = 'day', height = 280
       </AreaChart>
     </ResponsiveContainer>
   );
+
+  if (title) {
+    return (
+      <ChartWrapper title={title} csvData={csvData}>
+        {chart}
+      </ChartWrapper>
+    );
+  }
+  return chart;
 }

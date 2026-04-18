@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { downloadPng, downloadCsv, ChartDownloadButtons } from '@/components/ui/ChartDownload';
 
 const DAYS = ['Dg', 'Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds'];
 const HOURS = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}h`);
@@ -9,9 +10,11 @@ const HOURS = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '
 interface Props {
   data: { day: number; hour: number; count: number }[];
   loading?: boolean;
+  title?: string;
 }
 
-export function HeatmapChart({ data, loading }: Props) {
+export function HeatmapChart({ data, loading, title }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
   const maxCount = useMemo(() => Math.max(...data.map(d => d.count), 1), [data]);
 
   const grid = useMemo(() => {
@@ -29,8 +32,24 @@ export function HeatmapChart({ data, loading }: Props) {
     return `rgba(99, 102, 241, ${opacity})`;
   }
 
+  const csvData = DAYS.flatMap((day, dayIdx) =>
+    HOURS.map((hour, hourIdx) => ({
+      Dia: day,
+      Hora: hour,
+      Missatges: grid[`${dayIdx}_${hourIdx}`] ?? 0,
+    }))
+  );
+
   return (
-    <div className="overflow-x-auto">
+    <div ref={ref} className="relative group overflow-x-auto">
+      {title && (
+        <div className="absolute top-0 right-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ChartDownloadButtons
+            onPng={() => ref.current && downloadPng(ref.current, title)}
+            onCsv={() => downloadCsv(title, csvData)}
+          />
+        </div>
+      )}
       <div className="min-w-[600px]">
         {/* Hour labels */}
         <div className="flex ml-8 mb-1">

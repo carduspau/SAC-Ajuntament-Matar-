@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { sentimentColor, parseSentiment } from '@/lib/sentiment';
+import { sentimentColor } from '@/lib/sentiment';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import type { BarriStat } from '@/types';
 
 interface Props {
@@ -12,9 +13,10 @@ interface Props {
   height?: number;
   colorBy?: 'count' | 'sentiment';
   maxItems?: number;
+  title?: string;
 }
 
-export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'count', maxItems = 15 }: Props) {
+export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'count', maxItems = 15, title }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
   const sliced = data.slice(0, maxItems).map(d => ({
@@ -24,7 +26,13 @@ export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'c
     sentiment: d.avg_sentiment,
   }));
 
-  return (
+  const csvData = data.slice(0, maxItems).map(d => ({
+    Barri: d.barri,
+    Missatges: d.count,
+    ...(d.avg_sentiment !== null ? { 'Sentiment_mitja': d.avg_sentiment.toFixed(2) } : {}),
+  }));
+
+  const chart = (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={sliced} margin={{ top: 4, right: 8, left: -20, bottom: 40 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -55,4 +63,13 @@ export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'c
       </BarChart>
     </ResponsiveContainer>
   );
+
+  if (title) {
+    return (
+      <ChartWrapper title={title} csvData={csvData}>
+        {chart}
+      </ChartWrapper>
+    );
+  }
+  return chart;
 }

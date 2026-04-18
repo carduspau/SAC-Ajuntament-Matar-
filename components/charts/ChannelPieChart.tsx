@@ -3,6 +3,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import type { CanalStat } from '@/types';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'];
@@ -11,6 +12,7 @@ interface Props {
   data: CanalStat[];
   loading?: boolean;
   height?: number;
+  title?: string;
 }
 
 const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
@@ -26,12 +28,19 @@ const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: an
   );
 };
 
-export function ChannelPieChart({ data, loading, height = 280 }: Props) {
+export function ChannelPieChart({ data, loading, height = 280, title }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
+  const total = data.reduce((s, d) => s + d.count, 0);
   const chartData = data.map(d => ({ name: d.canal, value: d.count }));
 
-  return (
+  const csvData = data.map(d => ({
+    Canal: d.canal,
+    Missatges: d.count,
+    'Percentatge (%)': total > 0 ? ((d.count / total) * 100).toFixed(1) : '0.0',
+  }));
+
+  const chart = (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>
         <Pie
@@ -55,4 +64,13 @@ export function ChannelPieChart({ data, loading, height = 280 }: Props) {
       </PieChart>
     </ResponsiveContainer>
   );
+
+  if (title) {
+    return (
+      <ChartWrapper title={title} csvData={csvData}>
+        {chart}
+      </ChartWrapper>
+    );
+  }
+  return chart;
 }

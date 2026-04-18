@@ -4,17 +4,24 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { sentimentColor } from '@/lib/sentiment';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 
 interface Props {
   data: { range: string; count: number }[];
   loading?: boolean;
   height?: number;
+  title?: string;
 }
 
-export function SentimentHistogram({ data, loading, height = 240 }: Props) {
+export function SentimentHistogram({ data, loading, height = 240, title }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
-  return (
+  const csvData = data.map(d => ({
+    'Rang_sentiment': d.range,
+    Missatges: d.count,
+  }));
+
+  const chart = (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -33,4 +40,13 @@ export function SentimentHistogram({ data, loading, height = 240 }: Props) {
       </BarChart>
     </ResponsiveContainer>
   );
+
+  if (title) {
+    return (
+      <ChartWrapper title={title} csvData={csvData}>
+        {chart}
+      </ChartWrapper>
+    );
+  }
+  return chart;
 }

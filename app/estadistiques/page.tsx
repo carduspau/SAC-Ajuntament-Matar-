@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { FilterPanel, EMPTY_FILTERS } from '@/components/estadistiques/FilterPanel';
 import type { StatsFilters } from '@/components/estadistiques/FilterPanel';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import { TimelineChart } from '@/components/charts/TimelineChart';
 import { SentimentHistogram } from '@/components/charts/SentimentHistogram';
 import { CategoryBarChart } from '@/components/charts/CategoryBarChart';
@@ -114,7 +115,7 @@ function EstadistiquesPageInner() {
         <CardHeader>
           <CardTitle>Evolució temporal</CardTitle>
         </CardHeader>
-        <TimelineChart data={timeline} loading={loading} granularity={granularity} height={260} />
+        <TimelineChart data={timeline} loading={loading} granularity={granularity} height={260} title="evolucio-temporal" />
       </Card>
 
       {/* Row 1: Sentiment + Channel */}
@@ -123,13 +124,13 @@ function EstadistiquesPageInner() {
           <CardHeader>
             <CardTitle>Distribució de sentiment</CardTitle>
           </CardHeader>
-          <SentimentHistogram data={stats?.sentiment_distribution ?? []} loading={loading} />
+          <SentimentHistogram data={stats?.sentiment_distribution ?? []} loading={loading} title="distribucio-sentiment" />
         </Card>
         <Card>
           <CardHeader>
             <CardTitle>Missatges per canal</CardTitle>
           </CardHeader>
-          <ChannelPieChart data={stats?.by_canal ?? []} loading={loading} />
+          <ChannelPieChart data={stats?.by_canal ?? []} loading={loading} title="missatges-canal" />
         </Card>
       </div>
 
@@ -138,7 +139,7 @@ function EstadistiquesPageInner() {
         <CardHeader>
           <CardTitle>Missatges per categoria</CardTitle>
         </CardHeader>
-        <CategoryBarChart data={stats?.by_clas1 ?? []} loading={loading} height={320} />
+        <CategoryBarChart data={stats?.by_clas1 ?? []} loading={loading} height={320} title="missatges-categoria" />
       </Card>
 
       {/* Row 3: Barris */}
@@ -146,7 +147,7 @@ function EstadistiquesPageInner() {
         <CardHeader>
           <CardTitle>Missatges per barri</CardTitle>
         </CardHeader>
-        <NeighborhoodBarChart data={stats?.by_barri ?? []} loading={loading} colorBy={colorBy} />
+        <NeighborhoodBarChart data={stats?.by_barri ?? []} loading={loading} colorBy={colorBy} title="missatges-barri" />
       </Card>
 
       {/* Row 4: Heatmap */}
@@ -154,7 +155,7 @@ function EstadistiquesPageInner() {
         <CardHeader>
           <CardTitle>Mapa de calor: dia × hora</CardTitle>
         </CardHeader>
-        <HeatmapChart data={stats?.heatmap ?? []} loading={loading} />
+        <HeatmapChart data={stats?.heatmap ?? []} loading={loading} title="mapa-de-calor" />
       </Card>
 
       {/* Summary table */}
@@ -204,32 +205,37 @@ function EstadistiquesPageInner() {
               const intentPie = INTENT_ORDER
                 .map(k => ({ name: intentMeta(k).label, value: enriched?.by_intent.find(i => i.key === k)?.count ?? 0, hex: intentMeta(k).hex }))
                 .filter(d => d.value > 0);
+              const total = intentPie.reduce((s, x) => s + x.value, 0);
               return (
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width="50%" height={200}>
-                    <PieChart>
-                      <Pie data={intentPie} cx="50%" cy="50%" innerRadius={48} outerRadius={78} dataKey="value" paddingAngle={2}>
-                        {intentPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                        contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex-1 space-y-1.5">
-                    {intentPie.map(d => {
-                      const total = intentPie.reduce((s, x) => s + x.value, 0);
-                      const pct = total > 0 ? (d.value / total * 100).toFixed(0) : '0';
-                      return (
-                        <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
-                          <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
-                          <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
-                          <span className="text-muted-foreground-2">({pct}%)</span>
-                        </div>
-                      );
-                    })}
+                <ChartWrapper
+                  title="distribucio-intencio"
+                  csvData={intentPie.map(d => ({ Intencio: d.name, Missatges: d.value, 'Percentatge (%)': total > 0 ? (d.value / total * 100).toFixed(1) : '0' }))}
+                >
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width="50%" height={200}>
+                      <PieChart>
+                        <Pie data={intentPie} cx="50%" cy="50%" innerRadius={48} outerRadius={78} dataKey="value" paddingAngle={2}>
+                          {intentPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                          contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-1.5">
+                      {intentPie.map(d => {
+                        const pct = total > 0 ? (d.value / total * 100).toFixed(0) : '0';
+                        return (
+                          <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
+                            <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
+                            <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
+                            <span className="text-muted-foreground-2">({pct}%)</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                </ChartWrapper>
               );
             })()}
           </Card>
@@ -241,32 +247,37 @@ function EstadistiquesPageInner() {
               const actionPie = ACTION_ORDER
                 .map(k => ({ name: actionMeta(k).label, value: enriched?.by_action.find(a => a.key === k)?.count ?? 0, hex: ACTION_META[k]?.hex ?? '#94a3b8' }))
                 .filter(d => d.value > 0);
+              const total = actionPie.reduce((s, x) => s + x.value, 0);
               return (
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width="50%" height={200}>
-                    <PieChart>
-                      <Pie data={actionPie} cx="50%" cy="50%" innerRadius={48} outerRadius={78} dataKey="value" paddingAngle={2}>
-                        {actionPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                        contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex-1 space-y-1.5">
-                    {actionPie.map(d => {
-                      const total = actionPie.reduce((s, x) => s + x.value, 0);
-                      const pct = total > 0 ? (d.value / total * 100).toFixed(0) : '0';
-                      return (
-                        <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
-                          <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
-                          <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
-                          <span className="text-muted-foreground-2">({pct}%)</span>
-                        </div>
-                      );
-                    })}
+                <ChartWrapper
+                  title="accio-requerida"
+                  csvData={actionPie.map(d => ({ Accio: d.name, Missatges: d.value, 'Percentatge (%)': total > 0 ? (d.value / total * 100).toFixed(1) : '0' }))}
+                >
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width="50%" height={200}>
+                      <PieChart>
+                        <Pie data={actionPie} cx="50%" cy="50%" innerRadius={48} outerRadius={78} dataKey="value" paddingAngle={2}>
+                          {actionPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                          contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-1.5">
+                      {actionPie.map(d => {
+                        const pct = total > 0 ? (d.value / total * 100).toFixed(0) : '0';
+                        return (
+                          <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
+                            <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
+                            <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
+                            <span className="text-muted-foreground-2">({pct}%)</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                </ChartWrapper>
               );
             })()}
           </Card>
@@ -284,17 +295,22 @@ function EstadistiquesPageInner() {
                 hex: deptMeta(d.dept).hex,
               }));
               return (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={deptData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                    <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-                    <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                      contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                    <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={13}>
-                      {deptData.map((d, i) => <Cell key={i} fill={d.hex} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <ChartWrapper
+                  title="missatges-departament"
+                  csvData={deptData.map(d => ({ Departament: d.name, Missatges: d.count }))}
+                >
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={deptData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                      <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                      <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                      <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                        contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                      <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={13}>
+                        {deptData.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartWrapper>
               );
             })()}
           </Card>
@@ -361,18 +377,23 @@ function EstadistiquesPageInner() {
                   hex: deptMeta(d.dept).hex,
                 })).sort((a, b) => (b.pendent / (b.pendent + b.resolt)) - (a.pendent / (a.pendent + a.resolt)));
                 return (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={deptFollowup} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                      <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                      <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-                      <Tooltip
-                        formatter={(v: number, name: string) => [v.toLocaleString('ca-ES'), name === 'pendent' ? 'Pendent' : 'Resolt']}
-                        contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v) => v === 'pendent' ? 'Pendent' : 'Sense seguiment'} />
-                      <Bar dataKey="pendent" stackId="a" fill="#ef4444" barSize={13} radius={[0, 0, 0, 0]} name="pendent" />
-                      <Bar dataKey="resolt" stackId="a" fill="#e2e8f0" barSize={13} radius={[0, 4, 4, 0]} name="resolt" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <ChartWrapper
+                    title="seguiment-departament"
+                    csvData={deptFollowup.map(d => ({ Departament: d.name, Pendent: d.pendent, 'Sense_seguiment': d.resolt }))}
+                  >
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={deptFollowup} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                        <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                        <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          formatter={(v: number, name: string) => [v.toLocaleString('ca-ES'), name === 'pendent' ? 'Pendent' : 'Resolt']}
+                          contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                        <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v) => v === 'pendent' ? 'Pendent' : 'Sense seguiment'} />
+                        <Bar dataKey="pendent" stackId="a" fill="#ef4444" barSize={13} radius={[0, 0, 0, 0]} name="pendent" />
+                        <Bar dataKey="resolt" stackId="a" fill="#e2e8f0" barSize={13} radius={[0, 4, 4, 0]} name="resolt" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartWrapper>
                 );
               })()}
             </Card>

@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { ClipboardList, AlertOctagon, UserX, Wrench } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { IntentBadge, DeptBadge, ActionBadge, ExperienceBadge } from '@/components/ui/Badge';
 import { MessageDetail } from '@/components/missatges/MessageDetail';
@@ -119,27 +120,32 @@ export default function GestioPage() {
         <Card>
           <CardHeader><CardTitle>Acció requerida (seguiments pendents)</CardTitle></CardHeader>
           {loading ? <Skeleton className="h-60 w-full" /> : (
-            <div className="flex items-center gap-4">
-              <ResponsiveContainer width="55%" height={220}>
-                <PieChart>
-                  <Pie data={actionDonut} cx="50%" cy="50%" innerRadius={55} outerRadius={90}
-                    dataKey="value" paddingAngle={2}>
-                    {actionDonut.map((d, i) => <Cell key={i} fill={d.hex} />)}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                    contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex-1 space-y-2">
-                {actionDonut.map(d => (
-                  <div key={d.name} className="flex items-center gap-2 text-xs">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
-                    <span className="text-muted-foreground-1 flex-1">{d.name}</span>
-                    <span className="font-semibold text-foreground">{d.value.toLocaleString('ca-ES')}</span>
-                  </div>
-                ))}
+            <ChartWrapper
+              title="accio-requerida-seguiments"
+              csvData={actionDonut.map(d => ({ Accio: d.name, Missatges: d.value }))}
+            >
+              <div className="flex items-center gap-4">
+                <ResponsiveContainer width="55%" height={220}>
+                  <PieChart>
+                    <Pie data={actionDonut} cx="50%" cy="50%" innerRadius={55} outerRadius={90}
+                      dataKey="value" paddingAngle={2}>
+                      {actionDonut.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                      contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex-1 space-y-2">
+                  {actionDonut.map(d => (
+                    <div key={d.name} className="flex items-center gap-2 text-xs">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
+                      <span className="text-muted-foreground-1 flex-1">{d.name}</span>
+                      <span className="font-semibold text-foreground">{d.value.toLocaleString('ca-ES')}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            </ChartWrapper>
           )}
         </Card>
 
@@ -147,17 +153,22 @@ export default function GestioPage() {
         <Card>
           <CardHeader><CardTitle>Seguiments per departament</CardTitle></CardHeader>
           {loading ? <Skeleton className="h-60 w-full" /> : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={followupByDept} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Seguiments']}
-                  contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={12}>
-                  {followupByDept.map((d, i) => <Cell key={i} fill={d.hex} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <ChartWrapper
+              title="seguiments-departament"
+              csvData={followupByDept.map(d => ({ Departament: d.name, Seguiments: d.count, 'Taxa (%)': d.pct.toFixed(1) }))}
+            >
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={followupByDept} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Seguiments']}
+                    contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={12}>
+                    {followupByDept.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartWrapper>
           )}
         </Card>
       </div>

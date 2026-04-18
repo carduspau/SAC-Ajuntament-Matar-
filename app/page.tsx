@@ -16,6 +16,7 @@ import { TimelineChart } from '@/components/charts/TimelineChart';
 import { HeatmapChart } from '@/components/charts/HeatmapChart';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import { useStats } from '@/hooks/useStats';
 import { useTimeline } from '@/hooks/useTimeline';
 import { useEnrichedStats } from '@/hooks/useEnrichedStats';
@@ -54,7 +55,7 @@ export default function InicioPage() {
       {/* Timeline Chart */}
       <Card>
         <CardHeader><CardTitle>Evolució temporal</CardTitle></CardHeader>
-        <TimelineChart data={timeline} loading={timelineLoading} granularity={granularity} height={300} showSentiment />
+        <TimelineChart data={timeline} loading={timelineLoading} granularity={granularity} height={300} showSentiment title="evolucio-temporal" />
       </Card>
 
       {/* Categories + Canal charts */}
@@ -77,29 +78,34 @@ export default function InicioPage() {
           <Card>
             <CardHeader><CardTitle>Distribució per intenció</CardTitle></CardHeader>
             {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (
-              <div className="flex items-center gap-2">
-                <ResponsiveContainer width="55%" height={200}>
-                  <PieChart>
-                    <Pie data={intentPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
-                      {intentPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
-                    </Pie>
-                    <Tooltip
-                      formatter={(v: number, _: unknown, props: { payload?: { name?: string } }) => [
-                        v.toLocaleString('ca-ES'), props.payload?.name ?? 'Missatges'
-                      ]}
-                      contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex-1 space-y-1.5">
-                  {intentPie.map(d => (
-                    <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
-                      <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
-                      <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
-                    </div>
-                  ))}
+              <ChartWrapper
+                title="distribucio-intencio"
+                csvData={intentPie.map(d => ({ Intencio: d.name, Missatges: d.value }))}
+              >
+                <div className="flex items-center gap-2">
+                  <ResponsiveContainer width="55%" height={200}>
+                    <PieChart>
+                      <Pie data={intentPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
+                        {intentPie.map((d, i) => <Cell key={i} fill={d.hex} />)}
+                      </Pie>
+                      <Tooltip
+                        formatter={(v: number, _: unknown, props: { payload?: { name?: string } }) => [
+                          v.toLocaleString('ca-ES'), props.payload?.name ?? 'Missatges'
+                        ]}
+                        contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-1.5">
+                    {intentPie.map(d => (
+                      <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.hex }} />
+                        <span className="text-muted-foreground-1 flex-1 truncate">{d.name}</span>
+                        <span className="font-medium text-foreground">{d.value.toLocaleString('ca-ES')}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </ChartWrapper>
             )}
           </Card>
 
@@ -156,7 +162,7 @@ export default function InicioPage() {
       {/* Heatmap full width */}
       <Card>
         <CardHeader><CardTitle>Mapa de calor: dia × hora</CardTitle></CardHeader>
-        <HeatmapChart data={stats?.heatmap ?? []} loading={statsLoading} />
+        <HeatmapChart data={stats?.heatmap ?? []} loading={statsLoading} title="mapa-de-calor" />
       </Card>
 
       {/* Alerts + Quick Nav */}

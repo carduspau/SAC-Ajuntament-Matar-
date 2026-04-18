@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartDownloadButtons, downloadPng, downloadCsv } from '@/components/ui/ChartDownload';
 import { Radio } from 'lucide-react';
 import type { CanalStat } from '@/types';
 
@@ -41,12 +42,19 @@ function CenterLabel({ total, cx, cy }: { total: number; cx: number; cy: number 
 }
 
 export function CanalChart({ data, loading }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
   const total = data.reduce((s, d) => s + d.count, 0);
   const chartData = data.map((d, i) => ({
     name: d.canal,
     value: d.count,
     color: PALETTE[i % PALETTE.length],
     pct: total > 0 ? ((d.count / total) * 100).toFixed(1) : '0.0',
+  }));
+
+  const csvData = chartData.map(d => ({
+    Canal: d.name,
+    Missatges: d.value,
+    'Percentatge (%)': d.pct,
   }));
 
   // Custom tooltip
@@ -68,6 +76,10 @@ export function CanalChart({ data, loading }: Props) {
           <Radio className="w-4 h-4 text-primary" />
           Distribució per canal
         </CardTitle>
+        <ChartDownloadButtons
+          onPng={() => ref.current && downloadPng(ref.current, 'distribucio-canal')}
+          onCsv={() => downloadCsv('distribucio-canal', csvData)}
+        />
       </CardHeader>
 
       {loading ? (
@@ -75,7 +87,7 @@ export function CanalChart({ data, loading }: Props) {
       ) : chartData.length === 0 ? (
         <p className="text-sm text-muted-foreground-2 text-center py-10">Sense dades</p>
       ) : (
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div ref={ref} className="flex flex-col sm:flex-row items-center gap-4">
           {/* Donut */}
           <div className="shrink-0" style={{ width: 200, height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">

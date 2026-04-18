@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { Building2, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { IntentBadge, ActionBadge } from '@/components/ui/Badge';
 import { useEnrichedStats } from '@/hooks/useEnrichedStats';
@@ -139,39 +140,54 @@ export default function DepartamentsPage() {
       {/* Row 1: Dept bar (full width) */}
       <Card>
         <CardHeader><CardTitle>Missatges per departament</CardTitle></CardHeader>
-        {loading ? <Skeleton className="h-72 w-full" /> : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={depts.map(d => ({ name: deptMeta(d.dept).label, count: d.count, hex: deptMeta(d.dept).hex }))}
-              layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-              <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" width={145} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
-                contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
-                {depts.map((d, i) => <Cell key={i} fill={deptMeta(d.dept).hex} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
+        {loading ? <Skeleton className="h-72 w-full" /> : (() => {
+          const deptBarData = depts.map(d => ({ name: deptMeta(d.dept).label, count: d.count, hex: deptMeta(d.dept).hex }));
+          return (
+            <ChartWrapper
+              title="missatges-departament"
+              csvData={deptBarData.map(d => ({ Departament: d.name, Missatges: d.count }))}
+            >
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={deptBarData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={145} tick={{ fontSize: 11, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(v: number) => [v.toLocaleString('ca-ES'), 'Missatges']}
+                    contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
+                    {depts.map((d, i) => <Cell key={i} fill={deptMeta(d.dept).hex} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartWrapper>
+          );
+        })()}
       </Card>
 
       {/* Row 2: Stacked bar intent per dept */}
       <Card>
         <CardHeader><CardTitle>Distribució d'intencions per departament (top 7)</CardTitle></CardHeader>
         {loading ? <Skeleton className="h-64 w-full" /> : (
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={stackedData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-              <XAxis dataKey="dept" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                formatter={(value) => intentMeta(value).label} />
-              {INTENT_ORDER.map(key => (
-                <Bar key={key} dataKey={key} stackId="a" fill={INTENT_META[key]?.hex ?? '#94a3b8'}
-                  name={key} radius={key === 'agraïment' ? [4, 4, 0, 0] : undefined} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+          <ChartWrapper
+            title="intencions-departament"
+            csvData={stackedData.map(d => ({
+              Departament: d.dept,
+              ...Object.fromEntries(INTENT_ORDER.map(k => [intentMeta(k).label, (d as Record<string, unknown>)[k] ?? 0])),
+            }))}
+          >
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={stackedData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+                <XAxis dataKey="dept" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                  formatter={(value) => intentMeta(value).label} />
+                {INTENT_ORDER.map(key => (
+                  <Bar key={key} dataKey={key} stackId="a" fill={INTENT_META[key]?.hex ?? '#94a3b8'}
+                    name={key} radius={key === 'agraïment' ? [4, 4, 0, 0] : undefined} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartWrapper>
         )}
       </Card>
 

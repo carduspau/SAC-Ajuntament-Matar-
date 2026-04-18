@@ -3,6 +3,7 @@
 import React from 'react';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import { getCategoryColor } from '@/lib/categoryColors';
 import type { CategoryStat } from '@/types';
 
@@ -11,9 +12,10 @@ interface Props {
   loading?: boolean;
   height?: number;
   maxItems?: number;
+  title?: string;
 }
 
-export function CategoryBarChart({ data, loading, height = 300, maxItems = 10 }: Props) {
+export function CategoryBarChart({ data, loading, height = 300, maxItems = 10, title }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
   const sliced = data.slice(0, maxItems).map(d => ({
@@ -22,7 +24,12 @@ export function CategoryBarChart({ data, loading, height = 300, maxItems = 10 }:
     Missatges: d.count,
   }));
 
-  return (
+  const csvData = data.slice(0, maxItems).map(d => ({
+    Categoria: d.category,
+    Missatges: d.count,
+  }));
+
+  const chart = (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={sliced} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
@@ -47,4 +54,13 @@ export function CategoryBarChart({ data, loading, height = 300, maxItems = 10 }:
       </BarChart>
     </ResponsiveContainer>
   );
+
+  if (title) {
+    return (
+      <ChartWrapper title={title} csvData={csvData}>
+        {chart}
+      </ChartWrapper>
+    );
+  }
+  return chart;
 }

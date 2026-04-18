@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { AlertTriangle, MapPin } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ChartWrapper } from '@/components/ui/ChartWrapper';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MessageDetail } from '@/components/missatges/MessageDetail';
@@ -184,7 +185,11 @@ export default function AlertesPage() {
                   {allCritical.length.toLocaleString('ca-ES')}
                 </p>
                 {chartData.length >= 2 ? (
-                  <div className="flex-1 min-h-[80px] -mx-5">
+                  <ChartWrapper
+                    title="alertes-critiques-evolucio"
+                    csvData={chartData.map(d => ({ Data: formatBucket(d.b, granularity), Alertes: d.v }))}
+                    className="flex-1 min-h-[80px] -mx-5"
+                  >
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                         <defs>
@@ -208,7 +213,7 @@ export default function AlertesPage() {
                         <Area type="monotone" dataKey="v" stroke="#ef4444" strokeWidth={2} fill="url(#grad-crit)" dot={false} isAnimationActive={false} />
                       </AreaChart>
                     </ResponsiveContainer>
-                  </div>
+                  </ChartWrapper>
                 ) : (
                   <div className="flex-1 min-h-[80px] flex items-center justify-center">
                     <span className="text-xs text-muted-foreground-2">Sense dades temporals</span>
@@ -247,7 +252,11 @@ export default function AlertesPage() {
                   )}
                 </div>
                 {sentData.length >= 2 ? (
-                  <div className="flex-1 min-h-[60px] -mx-5">
+                  <ChartWrapper
+                    title="sentiment-critic-evolucio"
+                    csvData={sentData.map(d => ({ Data: formatBucket(d.b, granularity), 'Sentiment_mitja': (d.v as number).toFixed(2) }))}
+                    className="flex-1 min-h-[60px] -mx-5"
+                  >
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={sentData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
                         <defs>
@@ -271,7 +280,7 @@ export default function AlertesPage() {
                         <Area type="monotone" dataKey="v" stroke={sentCat.accent} strokeWidth={2} fill="url(#grad-sent-crit)" dot={false} isAnimationActive={false} />
                       </AreaChart>
                     </ResponsiveContainer>
-                  </div>
+                  </ChartWrapper>
                 ) : (
                   <div className="flex-1 min-h-[60px]" />
                 )}
@@ -291,28 +300,33 @@ export default function AlertesPage() {
             ) : catData.length === 0 ? (
               <p className="text-sm text-muted-foreground-2 text-center py-12">Sense dades</p>
             ) : (
-              <ResponsiveContainer width="100%" height={Math.max(200, catData.length * 28 + 16)}>
-                <BarChart data={catData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
-                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <YAxis
-                    dataKey="category"
-                    type="category"
-                    width={200}
-                    tick={{ fontSize: 11, fill: '#475569' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <RechartsTooltip
-                    contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }}
-                    formatter={(value: number) => [value.toLocaleString('ca-ES'), 'Alertes']}
-                  />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
-                    {catData.map((d, i) => (
-                      <Cell key={i} fill={getCategoryColor(d.fullCategory)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartWrapper
+                title="categories-alertes-critiques"
+                csvData={byCategory.slice(0, 10).map(d => ({ Categoria: d.category, Alertes: d.count }))}
+              >
+                <ResponsiveContainer width="100%" height={Math.max(200, catData.length * 28 + 16)}>
+                  <BarChart data={catData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                    <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      dataKey="category"
+                      type="category"
+                      width={200}
+                      tick={{ fontSize: 11, fill: '#475569' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: 12 }}
+                      formatter={(value: number) => [value.toLocaleString('ca-ES'), 'Alertes']}
+                    />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={14}>
+                      {catData.map((d, i) => (
+                        <Cell key={i} fill={getCategoryColor(d.fullCategory)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartWrapper>
             )}
           </Card>
         </div>
