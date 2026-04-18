@@ -41,9 +41,9 @@ export function HeatmapChart({ data, loading, title }: Props) {
   );
 
   return (
-    <div ref={ref} className="relative group overflow-x-auto">
+    <div ref={ref} className="relative overflow-x-auto">
       {title && (
-        <div className="absolute top-0 right-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-0 right-0 z-10">
           <ChartDownloadButtons
             onPng={() => ref.current && downloadPng(ref.current, title)}
             onCsv={() => downloadCsv(title, csvData)}
