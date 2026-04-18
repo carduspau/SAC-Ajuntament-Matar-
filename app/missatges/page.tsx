@@ -23,7 +23,10 @@ import { useFilters } from '@/hooks/useFilters';
 import { useDateRange } from '@/context/DateRangeContext';
 import { formatDate, truncate } from '@/lib/utils';
 import { messagesToCsv, downloadCsv } from '@/lib/csv';
+import { INTENT_META, DEPT_META, ACTION_META, LANGUAGE_META, EXPERIENCE_META, intentMeta } from '@/lib/intentColors';
 import type { SacMessage, FilterState } from '@/types';
+
+const INTENT_ORDER = ['queixa', 'incidència', 'consulta', 'sol·licitud', 'suggeriment', 'agraïment'];
 
 const col = createColumnHelper<SacMessage>();
 
@@ -121,7 +124,11 @@ export default function MissatgesPage() {
   }
 
   const selectedCount = Object.keys(rowSelection).length;
-  const activeFilterCount = [filters.q, filters.barri, filters.canal, filters.clas1].filter(Boolean).length;
+  const activeFilterCount = [
+    filters.q, filters.barri, filters.canal, filters.clas1,
+    filters.intent, filters.department, filters.action_required,
+    filters.language, filters.citizen_experience_signal,
+  ].filter(Boolean).length + (filters.followup_needed ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -168,6 +175,35 @@ export default function MissatgesPage() {
               Netejar
             </Button>
           )}
+        </div>
+
+        {/* Second filter row */}
+        <div className="flex flex-wrap gap-3 items-end pt-2 border-t border-card-line mt-2">
+          <div className="w-36">
+            <Select label="Intenció" value={filters.intent ?? ''} onChange={e => setFilter('intent', e.target.value || undefined)}
+              options={[{ value: '', label: 'Totes' }, ...INTENT_ORDER.map(k => ({ value: k, label: intentMeta(k).label }))]} />
+          </div>
+          <div className="w-40">
+            <Select label="Departament" value={filters.department ?? ''} onChange={e => setFilter('department', e.target.value || undefined)}
+              options={[{ value: '', label: 'Tots' }, ...Object.entries(DEPT_META).map(([v, m]) => ({ value: v, label: m.label }))]} />
+          </div>
+          <div className="w-40">
+            <Select label="Acció requerida" value={filters.action_required ?? ''} onChange={e => setFilter('action_required', e.target.value || undefined)}
+              options={[{ value: '', label: 'Totes' }, ...Object.entries(ACTION_META).map(([v, m]) => ({ value: v, label: m.label }))]} />
+          </div>
+          <div className="w-32">
+            <Select label="Idioma" value={filters.language ?? ''} onChange={e => setFilter('language', e.target.value || undefined)}
+              options={[{ value: '', label: 'Tots' }, ...Object.entries(LANGUAGE_META).map(([v, m]) => ({ value: v, label: m.label }))]} />
+          </div>
+          <div className="w-40">
+            <Select label="Experiència" value={filters.citizen_experience_signal ?? ''} onChange={e => setFilter('citizen_experience_signal', e.target.value || undefined)}
+              options={[{ value: '', label: 'Totes' }, ...Object.entries(EXPERIENCE_META).map(([v, m]) => ({ value: v, label: m.label }))]} />
+          </div>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground-1 cursor-pointer pb-1.5">
+            <input type="checkbox" checked={filters.followup_needed ?? false} onChange={e => setFilter('followup_needed', e.target.checked || undefined)}
+              className="rounded accent-primary" />
+            Seguiment pendent
+          </label>
         </div>
       </Card>
 

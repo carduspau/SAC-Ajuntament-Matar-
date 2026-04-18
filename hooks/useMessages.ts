@@ -32,6 +32,12 @@ export function useMessages(filters: FilterState = {}) {
       if (filters.clas1) q = q.eq('clas1', filters.clas1);
       if (filters.clas2) q = q.eq('clas2', filters.clas2);
       if (filters.q) q = q.ilike('message', `%${filters.q}%`);
+      if (filters.intent) q = q.eq('intent', filters.intent);
+      if (filters.department) q = q.eq('department', filters.department);
+      if (filters.action_required) q = q.eq('action_required', filters.action_required);
+      if (filters.language) q = q.eq('language', filters.language);
+      if (filters.citizen_experience_signal) q = q.eq('citizen_experience_signal', filters.citizen_experience_signal);
+      if (filters.followup_needed) q = q.eq('followup_needed', true);
 
       q = q.order(safeSort, { ascending: !sortDir });
       q = q.range(page * pageSize, (page + 1) * pageSize - 1);

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts';
@@ -34,26 +35,41 @@ function sentimentMatches(score: number, category: string): boolean {
   return false;
 }
 
-export default function EstadistiquesPage() {
+function EstadistiquesPageInner() {
   const { from, to, granularity } = useDateRange();
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<StatsFilters>(EMPTY_FILTERS);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [timeline, setTimeline] = useState<TimelineBucket[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: enriched, loading: enrichedLoading } = useEnrichedStats();
 
+  // Pre-populate barri filter from URL param ?barri=...
+  useEffect(() => {
+    const barriParam = searchParams.get('barri');
+    if (barriParam) {
+      setFilters(prev => ({ ...prev, barris: [barriParam] }));
+    }
+  }, [searchParams]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       let q = supabase
         .from('sac_messages')
-        .select('id,sentiment,barri,canal,clas1,data_inici')
+        .select('id,sentiment,barri,canal,clas1,data_inici,intent,department,action_required,language,citizen_experience_signal,followup_needed')
         .gte('data_inici', from.toISOString())
         .lte('data_inici', to.toISOString());
 
-      if (filters.barris.length > 0) q = q.in('barri', filters.barris);
-      if (filters.canals.length > 0) q = q.in('canal', filters.canals);
-      if (filters.clas1s.length > 0) q = q.in('clas1', filters.clas1s);
+      if (filters.barris.length > 0)       q = q.in('barri', filters.barris);
+      if (filters.canals.length > 0)       q = q.in('canal', filters.canals);
+      if (filters.clas1s.length > 0)       q = q.in('clas1', filters.clas1s);
+      if (filters.intents.length > 0)      q = q.in('intent', filters.intents);
+      if (filters.departments.length > 0)  q = q.in('department', filters.departments);
+      if (filters.actions.length > 0)      q = q.in('action_required', filters.actions);
+      if (filters.languages.length > 0)    q = q.in('language', filters.languages);
+      if (filters.experiences.length > 0)  q = q.in('citizen_experience_signal', filters.experiences);
+      if (filters.followupOnly)             q = q.eq('followup_needed', true);
 
       const { data: rows } = await q;
       const allRows = rows ?? [];
@@ -399,5 +415,13 @@ export default function EstadistiquesPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function EstadistiquesPage() {
+  return (
+    <Suspense>
+      <EstadistiquesPageInner />
+    </Suspense>
   );
 }

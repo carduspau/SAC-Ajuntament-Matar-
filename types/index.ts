@@ -41,6 +41,12 @@ export interface FilterState {
   clas2?: string;
   sentimentMin?: number;
   sentimentMax?: number;
+  intent?: string;
+  department?: string;
+  action_required?: string;
+  language?: string;
+  citizen_experience_signal?: string;
+  followup_needed?: boolean;
   q?: string;
   page?: number;
   pageSize?: number;

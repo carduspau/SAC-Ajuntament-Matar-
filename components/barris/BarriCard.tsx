@@ -14,9 +14,10 @@ interface Props {
   from: Date;
   to: Date;
   maxCount: number;
+  onClick?: () => void;
 }
 
-export function BarriCard({ stat, from, to, maxCount }: Props) {
+export function BarriCard({ stat, from, to, maxCount, onClick }: Props) {
   const [timeline, setTimeline] = useState<{ value: number }[]>([]);
   const [canals, setCanals] = useState<{ canal: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,10 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
   const pct = maxCount > 0 ? (stat.count / maxCount) * 100 : 0;
 
   return (
+    <div
+      className={onClick ? 'cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all' : undefined}
+      onClick={onClick}
+    >
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -119,5 +124,6 @@ export function BarriCard({ stat, from, to, maxCount }: Props) {
         )}
       </div>
     </Card>
+    </div>
   );
 }
