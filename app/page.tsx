@@ -7,7 +7,6 @@ import {
 import {
   MissatgesCard, SentimentCard, AlertesCard, CategoriesCard,
 } from '@/components/inici/SummaryCards';
-import { AlertsPanel } from '@/components/inici/AlertsPanel';
 import { QuickNav } from '@/components/inici/QuickNav';
 import { CategoriesChart } from '@/components/inici/CategoriesChart';
 import { CanalChart } from '@/components/inici/CanalChart';
@@ -164,13 +163,10 @@ export default function InicioPage() {
         <HeatmapChart data={stats?.heatmap ?? []} loading={statsLoading} title="mapa-de-calor" />
       </Card>
 
-      {/* Alerts + Quick Nav */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1"><AlertsPanel /></div>
-        <div className="lg:col-span-2">
-          <h2 className="text-sm font-semibold text-muted-foreground-1 mb-3">Accés ràpid</h2>
-          <QuickNav />
-        </div>
+      {/* Quick Nav */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground-1 mb-3">Accés ràpid</h2>
+        <QuickNav />
       </div>
     </div>
   );
