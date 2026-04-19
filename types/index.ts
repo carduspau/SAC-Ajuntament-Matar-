@@ -101,10 +101,21 @@ export interface ChatChartData {
   unit?: string;
 }
 
+export interface ChatAction {
+  type: 'navigate' | 'setFilter';
+  label: string;
+  href?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  barri?: string;
+  clas1?: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   chart?: ChatChartData;
+  action?: ChatAction;
 }
 
 export interface ReportConfig {

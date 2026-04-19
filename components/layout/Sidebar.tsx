@@ -27,17 +27,22 @@ const NAV_ITEMS = [
 interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  forceCollapsed?: boolean;
 }
 
-export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+export function Sidebar({ mobileOpen = false, onMobileClose, forceCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [userCollapsed, setUserCollapsed] = useState(false);
   const criticalCount = useCriticalCount();
+
+  // When chat opens, sidebar collapses; when it closes, restore user preference
+  const collapsed = forceCollapsed || userCollapsed;
 
   return (
     <aside
       className={cn(
-        'flex-col bg-sidebar border-r border-sidebar-line transition-all duration-200 shrink-0',
+        'flex-col bg-sidebar border-r border-sidebar-line shrink-0',
+        'transition-all duration-300',
         mobileOpen
           ? 'fixed inset-y-0 left-0 z-50 flex h-full w-64'
           : cn('hidden md:flex h-full', collapsed ? 'md:w-16' : 'md:w-64'),
@@ -57,7 +62,6 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             <p className="text-xs text-muted-foreground-2 mt-0.5">Ajuntament Mataró</p>
           </div>
         )}
-        {/* Close button — mobile only */}
         {mobileOpen && (
           <button
             onClick={onMobileClose}
@@ -129,20 +133,22 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         )}
       </div>
 
-      {/* Collapse toggle — desktop only */}
-      <div className="border-t border-sidebar-divider p-2 hidden md:block">
-        <button
-          onClick={() => setCollapsed(c => !c)}
-          className={cn(
-            'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted-hover transition-colors',
-            collapsed && 'justify-center'
-          )}
-        >
-          {collapsed
-            ? <ChevronRight className="w-4 h-4" />
-            : <><ChevronLeft className="w-4 h-4" /><span>Reduir</span></>}
-        </button>
-      </div>
+      {/* Collapse toggle — desktop only, hidden when force-collapsed by chat */}
+      {!forceCollapsed && (
+        <div className="border-t border-sidebar-divider p-2 hidden md:block">
+          <button
+            onClick={() => setUserCollapsed(c => !c)}
+            className={cn(
+              'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted-hover transition-colors',
+              collapsed && 'justify-center'
+            )}
+          >
+            {collapsed
+              ? <ChevronRight className="w-4 h-4" />
+              : <><ChevronLeft className="w-4 h-4" /><span>Reduir</span></>}
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

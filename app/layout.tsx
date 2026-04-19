@@ -3,8 +3,8 @@ import './globals.css';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { DateRangeProvider } from '@/context/DateRangeContext';
+import { ChatProvider } from '@/context/ChatContext';
 import { LayoutShell } from '@/components/layout/LayoutShell';
-import { ChatBot } from '@/components/chatbot/ChatBot';
 import { PrelineInit } from '@/components/PrelineInit';
 
 export const metadata: Metadata = {
@@ -23,8 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased bg-background-1">
         <PrelineInit />
         <DateRangeProvider>
-          <LayoutShell>{children}</LayoutShell>
-          <ChatBot />
+          <ChatProvider>
+            <LayoutShell>{children}</LayoutShell>
+          </ChatProvider>
         </DateRangeProvider>
       </body>
     </html>
