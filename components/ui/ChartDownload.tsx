@@ -69,11 +69,11 @@ export function ChartDownloadButtons({ onPng, onCsv }: ChartDownloadButtonsProps
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-card-line rounded-lg shadow-xs py-1 min-w-[150px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-card-line rounded-lg shadow-xs py-1 min-w-max">
           <button
             type="button"
             onClick={e => { e.stopPropagation(); setOpen(false); onPng(); }}
-            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-foreground hover:bg-muted-hover transition-colors"
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-foreground hover:bg-muted-hover transition-colors whitespace-nowrap"
           >
             <ImageDown className="w-3.5 h-3.5 text-muted-foreground-2" />
             Descarregar PNG
@@ -82,7 +82,7 @@ export function ChartDownloadButtons({ onPng, onCsv }: ChartDownloadButtonsProps
             <button
               type="button"
               onClick={e => { e.stopPropagation(); setOpen(false); onCsv(); }}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-foreground hover:bg-muted-hover transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-foreground hover:bg-muted-hover transition-colors whitespace-nowrap"
             >
               <FileDown className="w-3.5 h-3.5 text-muted-foreground-2" />
               Descarregar CSV
