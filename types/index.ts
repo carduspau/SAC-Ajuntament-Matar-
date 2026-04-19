@@ -117,6 +117,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   chart?: ChatChartData;
+  charts?: ChatChartData[];
   action?: ChatAction;
 }
 

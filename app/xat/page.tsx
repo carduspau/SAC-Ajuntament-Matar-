@@ -21,6 +21,13 @@ import type { ChatMessage, ChatChartData } from '@/types';
 
 const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6'];
 
+function sentimentBarColor(value: number): string {
+  if (value < 4) return '#ef4444';
+  if (value < 6) return '#f97316';
+  if (value < 7.5) return '#eab308';
+  return '#22c55e';
+}
+
 const WELCOME: ChatMessage = {
   role: 'assistant',
   content: 'Benvingut al **Xat d\'IA avançat** del SAC.\n\nPuc generar gràfics creatius i detallats directament des de les dades reals:\n\n• **Dispersió** sentiment vs urgència per barri\n• **Evolució temporal** amb sentiments\n• **Correlacions** entre variables\n• **Distribucions** per departament, intenció, canal...\n\nPots especificar el **rang de dates** al selector de dalt. Quin anàlisi vols fer?',
@@ -156,27 +163,30 @@ function XatChart({ chart }: { chart: ChatChartData }) {
     }
 
     // bar (default)
+    const isSentiment = chart.unit === '/10';
     const isVertical = data.length <= 6;
     if (isVertical) {
       return (
         <BarChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
           <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={36} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: '0.75rem', border: '1px solid #e2e8f0' }} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]} name="Missatges">
-            {data.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+          <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={36} domain={isSentiment ? [0, 10] : undefined} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}
+            formatter={(v: number) => [`${v}${isSentiment ? '/10' : ''}`, '']} />
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} name={isSentiment ? 'Sentiment' : 'Missatges'}>
+            {data.map((d, i) => <Cell key={i} fill={isSentiment ? sentimentBarColor(d.value) : CHART_COLORS[i % CHART_COLORS.length]} />)}
           </Bar>
         </BarChart>
       );
     }
     return (
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-        <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+        <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} domain={isSentiment ? [0, 10] : undefined} />
         <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: '0.75rem', border: '1px solid #e2e8f0' }} />
-        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16} name="Missatges">
-          {data.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+        <Tooltip contentStyle={{ fontSize: 12, borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}
+          formatter={(v: number) => [`${v}${isSentiment ? '/10' : ''}`, '']} />
+        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16} name={isSentiment ? 'Sentiment' : 'Missatges'}>
+          {data.map((d, i) => <Cell key={i} fill={isSentiment ? sentimentBarColor(d.value) : CHART_COLORS[i % CHART_COLORS.length]} />)}
         </Bar>
       </BarChart>
     );
@@ -263,6 +273,7 @@ export default function XatPage() {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.content ?? 'Error',
+        charts: data.charts?.length ? data.charts : undefined,
         chart: data.chart ?? undefined,
       }]);
     } catch {
@@ -331,7 +342,11 @@ export default function XatPage() {
               <div className="whitespace-pre-wrap leading-relaxed">
                 {msg.role === 'user' ? msg.content : renderMarkdown(msg.content)}
               </div>
-              {msg.role === 'assistant' && msg.chart && <XatChart chart={msg.chart} />}
+              {msg.role === 'assistant' && (
+                msg.charts && msg.charts.length > 0
+                  ? <div className="space-y-3">{msg.charts.map((c, ci) => <XatChart key={ci} chart={c} />)}</div>
+                  : msg.chart && <XatChart chart={msg.chart} />
+              )}
             </div>
           </div>
         ))}

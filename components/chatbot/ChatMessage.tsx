@@ -166,7 +166,11 @@ export function ChatMessage({ message, onAction }: ChatMessageProps) {
         <div className="whitespace-pre-wrap leading-relaxed">
           {isUser ? message.content : renderMarkdown(message.content)}
         </div>
-        {!isUser && message.chart && <InlineChatChart chart={message.chart} />}
+        {!isUser && (
+          message.charts && message.charts.length > 0
+            ? <div className="space-y-2">{message.charts.map((c, ci) => <InlineChatChart key={ci} chart={c} />)}</div>
+            : message.chart && <InlineChatChart chart={message.chart} />
+        )}
         {!isUser && message.action && onAction && (
           <button
             onClick={() => onAction(message.action!)}
