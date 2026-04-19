@@ -152,24 +152,58 @@ export function CriticalAlertsSection({ stats, loading }: Props) {
           </div>
         </Card>
 
-        {/* Column 3: Critical messages (fills height) */}
-        <Card className="flex flex-col overflow-hidden" padding={false}>
+        {/* Column 3: relative wrapper so this column never drives the row height;
+            the absolute child fills whatever height cols 1+2 establish */}
+        <div className="relative hidden lg:block">
+          <div className="absolute inset-0 flex flex-col">
+            <Card className="h-full flex flex-col overflow-hidden" padding={false}>
+              <div className="px-5 pt-4 pb-3 border-b border-card-line shrink-0 flex items-center justify-between">
+                <p className="text-sm font-semibold text-muted-foreground-1 uppercase tracking-wide">Missatges crítics</p>
+                <Link href="/alertes" className="text-xs text-primary hover:text-primary-hover flex items-center gap-1 transition-colors">
+                  Veure tots <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-scrollbar-thumb [&::-webkit-scrollbar-thumb]:rounded-full">
+                {critMessages.length === 0 ? (
+                  loading ? (
+                    <div className="space-y-2">
+                      {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground-2 text-center py-6">Sense missatges crítics</p>
+                  )
+                ) : critMessages.map((msg) => {
+                  const score = parseSentiment(msg.sentiment);
+                  return (
+                    <div key={msg.id} className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-100">
+                      <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-red-600">{score?.toFixed(1)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-xs font-medium text-foreground truncate">{msg.barri ?? '—'}</span>
+                          <span className="text-xs text-muted-foreground-2 shrink-0">{formatDate(msg.data_inici, 'dd/MM/yyyy')}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground-1 line-clamp-2">{truncate(msg.message, 100)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Column 3: mobile fallback (not absolute-positioned, just scrolls) */}
+        <Card className="flex flex-col overflow-hidden lg:hidden" padding={false}>
           <div className="px-5 pt-4 pb-3 border-b border-card-line shrink-0 flex items-center justify-between">
             <p className="text-sm font-semibold text-muted-foreground-1 uppercase tracking-wide">Missatges crítics</p>
             <Link href="/alertes" className="text-xs text-primary hover:text-primary-hover flex items-center gap-1 transition-colors">
               Veure tots <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-scrollbar-thumb [&::-webkit-scrollbar-thumb]:rounded-full">
-            {critMessages.length === 0 ? (
-              loading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground-2 text-center py-6">Sense missatges crítics</p>
-              )
-            ) : critMessages.map((msg) => {
+          <div className="overflow-y-auto max-h-64 p-4 space-y-2">
+            {critMessages.slice(0, 5).map((msg) => {
               const score = parseSentiment(msg.sentiment);
               return (
                 <div key={msg.id} className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-100">
