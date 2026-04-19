@@ -212,7 +212,7 @@ async function runStatsQuery(sb: SupabaseClient, from: Date, to: Date, barri: st
     countMap.set(key, (countMap.get(key) ?? 0) + 1);
   }
   const chartData = Array.from(countMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, value]) => ({ name, value }));
-  const sentiments = rows.map((r: { sentiment: string | null }) => parseSentiment(r.sentiment)).filter((s): s is number => s !== null);
+  const sentiments = (rows as { sentiment: string | null }[]).map(r => parseSentiment(r.sentiment)).filter((s: number | null): s is number => s !== null);
   const avg = sentiments.length > 0 ? (sentiments.reduce((a, b) => a + b, 0) / sentiments.length).toFixed(1) : 'N/D';
   const top = chartData[0];
   const titles: Record<string, string> = { barri: 'Missatges per barri', canal: 'Distribució per canal', clas1: 'Missatges per categoria' };
