@@ -1,6 +1,7 @@
 'use client';
 
-import { ImageDown, FileDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MoreVertical, ImageDown, FileDown } from 'lucide-react';
 
 export function downloadCsv(filename: string, data: Record<string, unknown>[]) {
   if (!data.length) return;
@@ -42,25 +43,52 @@ interface ChartDownloadButtonsProps {
 }
 
 export function ChartDownloadButtons({ onPng, onCsv }: ChartDownloadButtonsProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
   return (
-    <div className="flex items-center gap-0.5">
+    <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={e => { e.stopPropagation(); onPng(); }}
-        title="Descarregar PNG"
+        onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
+        title="Opcions de descàrrega"
         className="p-1 rounded hover:bg-muted-hover text-muted-foreground-2 hover:text-muted-foreground transition-colors"
       >
-        <ImageDown className="w-3.5 h-3.5" />
+        <MoreVertical className="w-4 h-4" />
       </button>
-      {onCsv && (
-        <button
-          type="button"
-          onClick={e => { e.stopPropagation(); onCsv(); }}
-          title="Descarregar CSV"
-          className="p-1 rounded hover:bg-muted-hover text-muted-foreground-2 hover:text-muted-foreground transition-colors"
-        >
-          <FileDown className="w-3.5 h-3.5" />
-        </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-card-line rounded-lg shadow-xs py-1 min-w-[150px]">
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); setOpen(false); onPng(); }}
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-foreground hover:bg-muted-hover transition-colors"
+          >
+            <ImageDown className="w-3.5 h-3.5 text-muted-foreground-2" />
+            Descarregar PNG
+          </button>
+          {onCsv && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); setOpen(false); onCsv(); }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-foreground hover:bg-muted-hover transition-colors"
+            >
+              <FileDown className="w-3.5 h-3.5 text-muted-foreground-2" />
+              Descarregar CSV
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
