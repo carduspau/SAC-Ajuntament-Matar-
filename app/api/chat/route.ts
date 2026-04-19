@@ -234,7 +234,7 @@ async function runSentimentQuery(sb: SupabaseClient, from: Date, to: Date, barri
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-  const sentiments = (data ?? []).map((r: { sentiment: string | null }) => parseSentiment(r.sentiment)).filter((s): s is number => s !== null);
+  const sentiments = (data ?? [] as { sentiment: string | null }[]).map((r: { sentiment: string | null }) => parseSentiment(r.sentiment)).filter((s: number | null): s is number => s !== null);
   if (sentiments.length === 0) return { content: 'No hi ha dades de sentiment per al filtre seleccionat.', rowCount: 0 };
 
   const avg = sentiments.reduce((a, b) => a + b, 0) / sentiments.length;
