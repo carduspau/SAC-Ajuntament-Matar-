@@ -54,8 +54,7 @@ export default function InicioPage() {
 
       {/* Timeline Chart */}
       <Card>
-        <CardHeader><CardTitle>Evolució temporal</CardTitle></CardHeader>
-        <TimelineChart data={timeline} loading={timelineLoading} granularity={granularity} height={300} showSentiment title="evolucio-temporal" />
+        <TimelineChart data={timeline} loading={timelineLoading} granularity={granularity} height={300} showSentiment title="evolucio-temporal" label="Evolució temporal" />
       </Card>
 
       {/* Categories + Canal charts */}
@@ -76,10 +75,10 @@ export default function InicioPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Intent donut */}
           <Card>
-            <CardHeader><CardTitle>Distribució per intenció</CardTitle></CardHeader>
             {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (
               <ChartWrapper
                 title="distribucio-intencio"
+                label="Distribució per intenció"
                 csvData={intentPie.map(d => ({ Intencio: d.name, Missatges: d.value }))}
               >
                 <div className="flex items-center gap-2">

@@ -139,12 +139,12 @@ export default function DepartamentsPage() {
 
       {/* Row 1: Dept bar (full width) */}
       <Card>
-        <CardHeader><CardTitle>Missatges per departament</CardTitle></CardHeader>
         {loading ? <Skeleton className="h-72 w-full" /> : (() => {
           const deptBarData = depts.map(d => ({ name: deptMeta(d.dept).label, count: d.count, hex: deptMeta(d.dept).hex }));
           return (
             <ChartWrapper
               title="missatges-departament"
+              label="Missatges per departament"
               csvData={deptBarData.map(d => ({ Departament: d.name, Missatges: d.count }))}
             >
               <ResponsiveContainer width="100%" height={300}>
@@ -165,10 +165,10 @@ export default function DepartamentsPage() {
 
       {/* Row 2: Stacked bar intent per dept */}
       <Card>
-        <CardHeader><CardTitle>Distribució d'intencions per departament (top 7)</CardTitle></CardHeader>
         {loading ? <Skeleton className="h-64 w-full" /> : (
           <ChartWrapper
             title="intencions-departament"
+            label="Distribució d'intencions per departament (top 7)"
             csvData={stackedData.map(d => ({
               Departament: d.dept,
               ...Object.fromEntries(INTENT_ORDER.map(k => [intentMeta(k).label, (d as Record<string, unknown>)[k] ?? 0])),

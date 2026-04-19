@@ -118,10 +118,10 @@ export default function GestioPage() {
 
         {/* Action required donut */}
         <Card>
-          <CardHeader><CardTitle>Acció requerida (seguiments pendents)</CardTitle></CardHeader>
           {loading ? <Skeleton className="h-60 w-full" /> : (
             <ChartWrapper
               title="accio-requerida-seguiments"
+              label="Acció requerida (seguiments pendents)"
               csvData={actionDonut.map(d => ({ Accio: d.name, Missatges: d.value }))}
             >
               <div className="flex items-center gap-4">
@@ -151,10 +151,10 @@ export default function GestioPage() {
 
         {/* Followup by department */}
         <Card>
-          <CardHeader><CardTitle>Seguiments per departament</CardTitle></CardHeader>
           {loading ? <Skeleton className="h-60 w-full" /> : (
             <ChartWrapper
               title="seguiments-departament"
+              label="Seguiments per departament"
               csvData={followupByDept.map(d => ({ Departament: d.name, Seguiments: d.count, 'Taxa (%)': d.pct.toFixed(1) }))}
             >
               <ResponsiveContainer width="100%" height={220}>

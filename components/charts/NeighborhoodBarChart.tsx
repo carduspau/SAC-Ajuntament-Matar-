@@ -14,9 +14,10 @@ interface Props {
   colorBy?: 'count' | 'sentiment';
   maxItems?: number;
   title?: string;
+  label?: string;
 }
 
-export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'count', maxItems = 15, title }: Props) {
+export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'count', maxItems = 15, title, label }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
   const sliced = data.slice(0, maxItems).map(d => ({
@@ -66,7 +67,7 @@ export function NeighborhoodBarChart({ data, loading, height = 300, colorBy = 'c
 
   if (title) {
     return (
-      <ChartWrapper title={title} csvData={csvData}>
+      <ChartWrapper title={title} label={label} csvData={csvData}>
         {chart}
       </ChartWrapper>
     );

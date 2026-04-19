@@ -18,6 +18,7 @@ interface Props {
   height?: number;
   showSentiment?: boolean;
   title?: string;
+  label?: string;
 }
 
 function formatBucket(bucket: string, granularity: TimelineGranularity = 'day'): string {
@@ -46,7 +47,7 @@ const CustomTooltip = ({ active, payload, label, granularity }: any) => {
   );
 };
 
-export function TimelineChart({ data, loading, granularity = 'day', height = 280, showSentiment = true, title }: Props) {
+export function TimelineChart({ data, loading, granularity = 'day', height = 280, showSentiment = true, title, label }: Props) {
   if (loading) return <Skeleton className={`w-full`} style={{ height }} />;
 
   const chartData = data.map(d => ({
@@ -128,7 +129,7 @@ export function TimelineChart({ data, loading, granularity = 'day', height = 280
 
   if (title) {
     return (
-      <ChartWrapper title={title} csvData={csvData}>
+      <ChartWrapper title={title} label={label} csvData={csvData}>
         {chart}
       </ChartWrapper>
     );

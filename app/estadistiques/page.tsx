@@ -112,42 +112,27 @@ function EstadistiquesPageInner() {
 
       {/* Timeline */}
       <Card>
-        <CardHeader>
-          <CardTitle>Evolució temporal</CardTitle>
-        </CardHeader>
-        <TimelineChart data={timeline} loading={loading} granularity={granularity} height={260} title="evolucio-temporal" />
+        <TimelineChart data={timeline} loading={loading} granularity={granularity} height={260} title="evolucio-temporal" label="Evolució temporal" />
       </Card>
 
       {/* Row 1: Sentiment + Channel */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Distribució de sentiment</CardTitle>
-          </CardHeader>
-          <SentimentHistogram data={stats?.sentiment_distribution ?? []} loading={loading} title="distribucio-sentiment" />
+          <SentimentHistogram data={stats?.sentiment_distribution ?? []} loading={loading} title="distribucio-sentiment" label="Distribució de sentiment" />
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Missatges per canal</CardTitle>
-          </CardHeader>
-          <ChannelPieChart data={stats?.by_canal ?? []} loading={loading} title="missatges-canal" />
+          <ChannelPieChart data={stats?.by_canal ?? []} loading={loading} title="missatges-canal" label="Missatges per canal" />
         </Card>
       </div>
 
       {/* Row 2: Categories */}
       <Card>
-        <CardHeader>
-          <CardTitle>Missatges per categoria</CardTitle>
-        </CardHeader>
-        <CategoryBarChart data={stats?.by_clas1 ?? []} loading={loading} height={320} title="missatges-categoria" />
+        <CategoryBarChart data={stats?.by_clas1 ?? []} loading={loading} height={320} title="missatges-categoria" label="Missatges per categoria" />
       </Card>
 
       {/* Row 3: Barris */}
       <Card>
-        <CardHeader>
-          <CardTitle>Missatges per barri</CardTitle>
-        </CardHeader>
-        <NeighborhoodBarChart data={stats?.by_barri ?? []} loading={loading} colorBy={colorBy} title="missatges-barri" />
+        <NeighborhoodBarChart data={stats?.by_barri ?? []} loading={loading} colorBy={colorBy} title="missatges-barri" label="Missatges per barri" />
       </Card>
 
       {/* Row 4: Heatmap */}
@@ -200,7 +185,6 @@ function EstadistiquesPageInner() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Intent donut */}
           <Card>
-            <CardHeader><CardTitle>Distribució per intenció</CardTitle></CardHeader>
             {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (() => {
               const intentPie = INTENT_ORDER
                 .map(k => ({ name: intentMeta(k).label, value: enriched?.by_intent.find(i => i.key === k)?.count ?? 0, hex: intentMeta(k).hex }))
@@ -209,6 +193,7 @@ function EstadistiquesPageInner() {
               return (
                 <ChartWrapper
                   title="distribucio-intencio"
+                  label="Distribució per intenció"
                   csvData={intentPie.map(d => ({ Intencio: d.name, Missatges: d.value, 'Percentatge (%)': total > 0 ? (d.value / total * 100).toFixed(1) : '0' }))}
                 >
                   <div className="flex items-center gap-4">
@@ -242,7 +227,6 @@ function EstadistiquesPageInner() {
 
           {/* Action required donut */}
           <Card>
-            <CardHeader><CardTitle>Acció requerida</CardTitle></CardHeader>
             {enrichedLoading ? <Skeleton className="h-52 w-full" /> : (() => {
               const actionPie = ACTION_ORDER
                 .map(k => ({ name: actionMeta(k).label, value: enriched?.by_action.find(a => a.key === k)?.count ?? 0, hex: ACTION_META[k]?.hex ?? '#94a3b8' }))
@@ -251,6 +235,7 @@ function EstadistiquesPageInner() {
               return (
                 <ChartWrapper
                   title="accio-requerida"
+                  label="Acció requerida"
                   csvData={actionPie.map(d => ({ Accio: d.name, Missatges: d.value, 'Percentatge (%)': total > 0 ? (d.value / total * 100).toFixed(1) : '0' }))}
                 >
                   <div className="flex items-center gap-4">
@@ -287,7 +272,6 @@ function EstadistiquesPageInner() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Dept horizontal bar */}
           <Card>
-            <CardHeader><CardTitle>Missatges per departament</CardTitle></CardHeader>
             {enrichedLoading ? <Skeleton className="h-64 w-full" /> : (() => {
               const deptData = (enriched?.by_department ?? []).slice(0, 10).map(d => ({
                 name: deptMeta(d.dept).label,
@@ -297,6 +281,7 @@ function EstadistiquesPageInner() {
               return (
                 <ChartWrapper
                   title="missatges-departament"
+                  label="Missatges per departament"
                   csvData={deptData.map(d => ({ Departament: d.name, Missatges: d.count }))}
                 >
                   <ResponsiveContainer width="100%" height={260}>
@@ -368,7 +353,6 @@ function EstadistiquesPageInner() {
           {/* Stacked bar: followup vs total per dept */}
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader><CardTitle>Taxa de seguiment pendent per departament</CardTitle></CardHeader>
               {enrichedLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                 const deptFollowup = (enriched?.by_department ?? []).slice(0, 8).map(d => ({
                   name: deptMeta(d.dept).label,
@@ -379,6 +363,7 @@ function EstadistiquesPageInner() {
                 return (
                   <ChartWrapper
                     title="seguiment-departament"
+                    label="Taxa de seguiment pendent per departament"
                     csvData={deptFollowup.map(d => ({ Departament: d.name, Pendent: d.pendent, 'Sense_seguiment': d.resolt }))}
                   >
                     <ResponsiveContainer width="100%" height={260}>

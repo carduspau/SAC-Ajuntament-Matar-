@@ -11,9 +11,10 @@ interface Props {
   loading?: boolean;
   height?: number;
   title?: string;
+  label?: string;
 }
 
-export function SentimentHistogram({ data, loading, height = 240, title }: Props) {
+export function SentimentHistogram({ data, loading, height = 240, title, label }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
   const csvData = data.map(d => ({
@@ -43,7 +44,7 @@ export function SentimentHistogram({ data, loading, height = 240, title }: Props
 
   if (title) {
     return (
-      <ChartWrapper title={title} csvData={csvData}>
+      <ChartWrapper title={title} label={label} csvData={csvData}>
         {chart}
       </ChartWrapper>
     );

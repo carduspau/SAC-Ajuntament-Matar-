@@ -13,9 +13,10 @@ interface Props {
   height?: number;
   maxItems?: number;
   title?: string;
+  label?: string;
 }
 
-export function CategoryBarChart({ data, loading, height = 300, maxItems = 10, title }: Props) {
+export function CategoryBarChart({ data, loading, height = 300, maxItems = 10, title, label }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
   const sliced = data.slice(0, maxItems).map(d => ({
@@ -57,7 +58,7 @@ export function CategoryBarChart({ data, loading, height = 300, maxItems = 10, t
 
   if (title) {
     return (
-      <ChartWrapper title={title} csvData={csvData}>
+      <ChartWrapper title={title} label={label} csvData={csvData}>
         {chart}
       </ChartWrapper>
     );

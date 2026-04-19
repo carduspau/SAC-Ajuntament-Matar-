@@ -13,6 +13,7 @@ interface Props {
   loading?: boolean;
   height?: number;
   title?: string;
+  label?: string;
 }
 
 const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
@@ -28,7 +29,7 @@ const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: an
   );
 };
 
-export function ChannelPieChart({ data, loading, height = 280, title }: Props) {
+export function ChannelPieChart({ data, loading, height = 280, title, label }: Props) {
   if (loading) return <Skeleton className="w-full" style={{ height }} />;
 
   const total = data.reduce((s, d) => s + d.count, 0);
@@ -67,7 +68,7 @@ export function ChannelPieChart({ data, loading, height = 280, title }: Props) {
 
   if (title) {
     return (
-      <ChartWrapper title={title} csvData={csvData}>
+      <ChartWrapper title={title} label={label} csvData={csvData}>
         {chart}
       </ChartWrapper>
     );

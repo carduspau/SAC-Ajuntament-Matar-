@@ -292,9 +292,6 @@ export default function AlertesPage() {
         {/* Left bottom: categories bar chart */}
         <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Categories de les alertes crítiques</CardTitle>
-            </CardHeader>
             {loading ? (
               <Skeleton className="h-64 w-full" />
             ) : catData.length === 0 ? (
@@ -302,6 +299,7 @@ export default function AlertesPage() {
             ) : (
               <ChartWrapper
                 title="categories-alertes-critiques"
+                label="Categories de les alertes crítiques"
                 csvData={byCategory.slice(0, 10).map(d => ({ Categoria: d.category, Alertes: d.count }))}
               >
                 <ResponsiveContainer width="100%" height={Math.max(200, catData.length * 28 + 16)}>
