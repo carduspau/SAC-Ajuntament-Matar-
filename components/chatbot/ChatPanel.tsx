@@ -2,8 +2,9 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
-  Send, Settings, Bot, Trash2, FileDown, FileText, X,
+  Send, Settings, Bot, Trash2, X, Maximize2,
   BarChart2, TrendingUp, MapPin, Radio, Tag, AlertTriangle,
 } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
@@ -11,8 +12,7 @@ import { ApiKeyDialog } from './ApiKeyDialog';
 import { useDateRange } from '@/context/DateRangeContext';
 import { useStats } from '@/hooks/useStats';
 import { Spinner } from '@/components/ui/Spinner';
-import { downloadCsv } from '@/lib/csv';
-import type { ChatMessage as ChatMsgType, ChatChartData, ChatAction } from '@/types';
+import type { ChatMessage as ChatMsgType, ChatAction } from '@/types';
 
 const WELCOME: ChatMsgType = {
   role: 'assistant',
@@ -40,8 +40,6 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const messagesRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,57 +97,12 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   function handleAction(action: ChatAction) {
     if (action.type === 'navigate' && action.href) {
       router.push(action.href);
-      onClose?.();
+      // Assistant stays open on navigate
     } else if (action.type === 'setFilter' && action.dateFrom && action.dateTo) {
       setCustomRange(new Date(action.dateFrom), new Date(action.dateTo));
-      if (action.href) {
-        router.push(action.href);
-        onClose?.();
-      }
+      if (action.href) router.push(action.href);
     }
   }
-
-  async function exportToPdf() {
-    if (!messagesRef.current || exporting) return;
-    setExporting(true);
-    try {
-      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-        import('jspdf'), import('html2canvas'),
-      ]);
-      const canvas = await html2canvas(messagesRef.current, {
-        scale: 2, backgroundColor: '#f8fafc', logging: false, useCORS: true,
-      });
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const margin = 10;
-      const contentW = pageW - margin * 2;
-      const ratio = canvas.width / contentW;
-      const pageH = (pdf.internal.pageSize.getHeight() - margin * 2) * ratio;
-
-      let y = 0;
-      while (y < canvas.height) {
-        const sliceH = Math.min(canvas.height - y, pageH);
-        const slice = document.createElement('canvas');
-        slice.width = canvas.width; slice.height = sliceH;
-        slice.getContext('2d')!.drawImage(canvas, 0, -y);
-        if (y > 0) pdf.addPage();
-        pdf.addImage(slice.toDataURL('image/jpeg', 0.9), 'JPEG', margin, margin, contentW, sliceH / ratio);
-        y += sliceH;
-      }
-      pdf.save(`conversa-sac-${new Date().toISOString().slice(0, 10)}.pdf`);
-    } finally {
-      setExporting(false);
-    }
-  }
-
-  function exportLastChartToCsv() {
-    const lastChart = [...messages].reverse().find(m => m.chart)?.chart as ChatChartData | undefined;
-    if (!lastChart) return;
-    const csv = [`Nom,Valor`, ...lastChart.data.map(d => `${d.name},${d.value}`)].join('\n');
-    downloadCsv(csv, `${lastChart.title.replace(/\s+/g, '-').toLowerCase()}.csv`);
-  }
-
-  const hasChart = messages.some(m => m.chart);
 
   return (
     <div className="flex flex-col h-full bg-card border-l border-card-line shadow-2xl overflow-hidden">
@@ -157,24 +110,13 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-card-line bg-primary shrink-0">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5 text-primary-foreground" />
-          <div>
-            <span className="text-sm font-semibold text-primary-foreground">Assistent SAC</span>
-            <p className="text-[10px] text-primary-foreground/70 leading-none mt-0.5">
-              {from.toLocaleDateString('ca-ES')} – {to.toLocaleDateString('ca-ES')}
-            </p>
-          </div>
+          <span className="text-sm font-semibold text-primary-foreground">Assistent SAC</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={exportToPdf} disabled={exporting} title="Exportar conversa a PDF"
-            className="p-1.5 rounded-lg hover:bg-primary-hover transition-colors focus:outline-none disabled:opacity-50">
-            {exporting ? <Spinner className="w-4 h-4 text-primary-foreground" /> : <FileDown className="w-4 h-4 text-primary-foreground" />}
-          </button>
-          {hasChart && (
-            <button onClick={exportLastChartToCsv} title="Exportar últim gràfic a CSV"
-              className="p-1.5 rounded-lg hover:bg-primary-hover transition-colors focus:outline-none">
-              <FileText className="w-4 h-4 text-primary-foreground" />
-            </button>
-          )}
+          <Link href="/xat" title="Obrir en pantalla completa"
+            className="p-1.5 rounded-lg hover:bg-primary-hover transition-colors focus:outline-none">
+            <Maximize2 className="w-4 h-4 text-primary-foreground" />
+          </Link>
           <button onClick={() => setMessages([WELCOME])} title="Netejar conversa"
             className="p-1.5 rounded-lg hover:bg-primary-hover transition-colors focus:outline-none">
             <Trash2 className="w-4 h-4 text-primary-foreground" />
@@ -206,8 +148,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
       </div>
 
       {/* Messages */}
-      <div ref={messagesRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-scrollbar-track [&::-webkit-scrollbar-thumb]:bg-scrollbar-thumb [&::-webkit-scrollbar-thumb]:rounded-full">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-scrollbar-track [&::-webkit-scrollbar-thumb]:bg-scrollbar-thumb [&::-webkit-scrollbar-thumb]:rounded-full">
         {messages.map((msg, i) => (
           <ChatMessage key={i} message={msg} onAction={handleAction} />
         ))}
@@ -237,7 +178,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
           </button>
         </div>
         <p className="text-[10px] text-muted-foreground-2 mt-1.5 text-center">
-          Dades en temps real • Pots especificar dates, barri i categoria
+          Dades en temps real · Pots especificar dates, barri i categoria
         </p>
       </div>
 

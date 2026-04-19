@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart2, Map, Building2,
   MessageSquare, FileText, ChevronLeft, ChevronRight,
-  AlertTriangle, User, LogOut, Layers, ClipboardList, TrendingUp,
+  AlertTriangle, User, LogOut, Layers, ClipboardList, TrendingUp, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCriticalCount } from '@/hooks/useCriticalCount';
@@ -108,6 +108,29 @@ export function Sidebar({ mobileOpen = false, onMobileClose, forceCollapsed = fa
           );
         })}
       </nav>
+
+      {/* Xat d'IA — bottom-pinned link */}
+      <div className="border-t border-sidebar-divider py-2 shrink-0">
+        {(() => {
+          const active = pathname === '/xat';
+          return (
+            <Link
+              href="/xat"
+              className={cn(
+                'flex items-center gap-3 mx-2 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium',
+                active
+                  ? 'bg-sidebar-nav-active text-primary'
+                  : 'text-sidebar-nav-foreground hover:bg-sidebar-nav-hover hover:text-foreground',
+                collapsed && 'justify-center px-2'
+              )}
+              title={collapsed ? 'Xat d\'IA' : undefined}
+            >
+              <Sparkles className={cn('w-5 h-5 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
+              {!collapsed && <span className="flex-1">Xat d&apos;IA</span>}
+            </Link>
+          );
+        })()}
+      </div>
 
       {/* User section */}
       <div className={cn(

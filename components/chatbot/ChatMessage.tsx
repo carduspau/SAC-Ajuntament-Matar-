@@ -4,7 +4,8 @@ import React, { useRef, useCallback } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   LineChart, Line, AreaChart, Area,
-  XAxis, YAxis, Tooltip,
+  ScatterChart, Scatter, ZAxis,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from 'recharts';
 import { FileText, ImageIcon, ArrowRight, Filter } from 'lucide-react';
@@ -100,6 +101,32 @@ function InlineChatChart({ chart }: { chart: ChatChartData }) {
               <Tooltip contentStyle={{ fontSize: 11, borderRadius: '0.5rem', border: '1px solid #e2e8f0' }} />
               <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={2} dot={false} />
             </LineChart>
+          ) : chart.type === 'scatter' ? (
+            <ScatterChart margin={{ top: 4, right: 12, bottom: 20, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="x" type="number" name={chart.xLabel ?? 'X'} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} label={{ value: chart.xLabel ?? '', position: 'insideBottom', offset: -12, fontSize: 9 }} />
+              <YAxis dataKey="y" type="number" name={chart.yLabel ?? 'Y'} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={32} />
+              <ZAxis dataKey="value" range={[40, 300]} />
+              <Tooltip contentStyle={{ fontSize: 11, borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}
+                content={({ payload }) => {
+                  if (!payload?.length) return null;
+                  const d = payload[0].payload as { name: string; x: number; y: number; value: number };
+                  return (
+                    <div className="bg-white border border-gray-200 rounded-lg p-2 text-xs shadow-sm">
+                      <p className="font-semibold mb-1">{d.name}</p>
+                      <p>{chart.xLabel ?? 'X'}: <strong>{d.x}</strong></p>
+                      <p>{chart.yLabel ?? 'Y'}: <strong>{d.y}%</strong></p>
+                      <p>Missatges: <strong>{d.value}</strong></p>
+                    </div>
+                  );
+                }}
+              />
+              <Scatter data={data} fill="#2563eb" fillOpacity={0.7}>
+                {data.map((d, i) => (
+                  <Cell key={i} fill={(d.x ?? 0) < 4 ? '#ef4444' : (d.x ?? 0) < 6 ? '#f97316' : '#22c55e'} fillOpacity={0.75} />
+                ))}
+              </Scatter>
+            </ScatterChart>
           ) : (
             <BarChart data={data} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }}>
               <XAxis type="number" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />

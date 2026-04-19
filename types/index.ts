@@ -95,10 +95,12 @@ export interface StatsResponse {
 }
 
 export interface ChatChartData {
-  type: 'bar' | 'pie' | 'line' | 'area';
+  type: 'bar' | 'pie' | 'line' | 'area' | 'scatter';
   title: string;
-  data: { name: string; value: number; value2?: number }[];
+  data: { name: string; value: number; value2?: number; x?: number; y?: number }[];
   unit?: string;
+  xLabel?: string;
+  yLabel?: string;
 }
 
 export interface ChatAction {
