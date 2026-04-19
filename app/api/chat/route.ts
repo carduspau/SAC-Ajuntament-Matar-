@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabase } from '@/lib/supabase-server';
 import { parseSentiment } from '@/lib/sentiment';
 import type { ChatChartData, ChatAction } from '@/types';
 
@@ -31,336 +30,277 @@ interface QueryResult {
   rowCount: number;
 }
 
+const EMPTY_STATS: ChatStats = {
+  total: 0, avgSentiment: null, criticalCount: 0,
+  topBarri: null, topCanal: null, topCategory: null,
+  byBarri: {}, byCanal: {}, byClas1: {},
+};
+
 // ─── Date parsing ─────────────────────────────────────────────────────────────
 
 const MONTHS_CA: Record<string, number> = {
   'gener': 0, 'febrer': 1, 'març': 2, 'abril': 3, 'maig': 4, 'juny': 5,
   'juliol': 6, 'agost': 7, 'setembre': 8, 'octubre': 9, 'novembre': 10, 'desembre': 11,
-  // Spanish fallback (octubre already covered above)
   'enero': 0, 'febrero': 1, 'marzo': 2, 'mayo': 4, 'junio': 5,
   'julio': 6, 'agosto': 7, 'septiembre': 8, 'noviembre': 10, 'diciembre': 11,
 };
 
 function parseDateRange(text: string, defaultFrom: Date, defaultTo: Date): { from: Date; to: Date; explicit: boolean } {
   const monthPat = Object.keys(MONTHS_CA).join('|');
-
-  // "abril de 2026" / "abril 2026"
   const mym = text.match(new RegExp(`(${monthPat})\\s+(?:de(?:l)?\\s+)?(\\d{4})`, 'i'));
   if (mym) {
     const month = MONTHS_CA[mym[1].toLowerCase()];
     const year = parseInt(mym[2]);
-    return {
-      from: new Date(year, month, 1),
-      to: new Date(year, month + 1, 0, 23, 59, 59, 999),
-      explicit: true,
-    };
+    return { from: new Date(year, month, 1), to: new Date(year, month + 1, 0, 23, 59, 59, 999), explicit: true };
   }
-
-  // "any 2025" / "l'any 2025"
   const ym = text.match(/\bany\s+(20\d{2})\b/i);
   if (ym) {
     const year = parseInt(ym[1]);
     return { from: new Date(year, 0, 1), to: new Date(year, 11, 31, 23, 59, 59, 999), explicit: true };
   }
-
-  // "últims N dies"
   const ldm = text.match(/\b(?:darrers|últims|ultimos)\s+(\d+)\s+dies\b/i);
   if (ldm) {
     const days = parseInt(ldm[1]);
     const to = new Date();
-    const from = new Date(to.getTime() - days * 86400000);
-    return { from, to, explicit: true };
+    return { from: new Date(to.getTime() - days * 86400000), to, explicit: true };
   }
-
   return { from: defaultFrom, to: defaultTo, explicit: false };
 }
 
-// ─── Barri extraction ─────────────────────────────────────────────────────────
+// ─── Filter extraction ────────────────────────────────────────────────────────
 
 function extractBarri(text: string): string | null {
-  // "barri de/del/de la/del" → next proper noun
-  const m = text.match(/barri\s+(?:de(?:l|ls|s)?\s+(?:la\s+|el\s+|les\s+|els\s+)?)?([A-ZÁÀÉÈÍÏÓÒÚÜÇÑ][a-záàéèíïóòúüçñA-ZÁÀÉÈÍÏÓÒÚÜÇÑ\-' ]+?)(?=\s+(?:de|del|durant|en|el|la|les|els|i|o|,|\.|\n|$))/i);
+  const m = text.match(/barri\s+(?:de(?:l|ls|s)?\s+(?:la\s+|el\s+|les\s+|els\s+)?)?([A-ZÁÀÉÈÍÏÓÒÚÜÇÑ][a-záàéèíïóòúüçñA-ZÁÀÉÈÍÏÓÒÚÜÇÑ\-']+)/i);
   if (m) return m[1].trim();
-
-  // Standalone known barri patterns
-  const known = [
-    'Cerdanyola', 'Eixample', 'Palau', 'Llàntia', 'Cirera', 'Rocafonda',
-    'Santes', 'Molinet', 'Vista Alegre', 'Peramàs', 'Sorrall', 'Havana',
-    'Boet', 'Quirze', 'Vallveric', 'Batlleix', 'Lazareto', 'Pla d\'en',
-  ];
+  const known = ['Cerdanyola', 'Eixample', 'Palau', 'Llàntia', 'Cirera', 'Rocafonda',
+    'Santes', 'Molinet', 'Vista Alegre', 'Peramàs', 'Sorrall', 'Havana', 'Boet'];
   const lower = text.toLowerCase();
-  for (const b of known) {
-    if (lower.includes(b.toLowerCase())) return b;
-  }
+  for (const b of known) if (lower.includes(b.toLowerCase())) return b;
   return null;
 }
-
-// ─── Category keyword extraction ──────────────────────────────────────────────
 
 function extractClas1Keyword(text: string): string | null {
   const lower = text.toLowerCase();
   const patterns: [string, string][] = [
-    ['neteja', 'neteja'],
-    ['residus', 'residus'],
-    ['via pública', 'via'],
-    ['via publica', 'via'],
-    ['vies públiques', 'via'],
-    ['vies publiques', 'via'],
-    ['llicència', 'llicènc'],
-    ['llicencia', 'llicènc'],
-    ['llum', 'llum'],
-    ['enllumenat', 'llum'],
-    ['soroll', 'soroll'],
-    ['sorolls', 'soroll'],
-    ['trànsit', 'trànsit'],
-    ['transit', 'trànsit'],
-    ['urbanisme', 'urbanisme'],
-    ['obres', 'obres'],
-    ['parcs', 'parc'],
-    ['jardins', 'parc'],
-    ['transport', 'transport'],
-    ['seguretat', 'seguretat'],
-    ['clavegueram', 'clavegueram'],
-    ['habitatge', 'habitatge'],
-    ['animals', 'animals'],
-    ['plagues', 'plagues'],
-    ['aigues', 'aigues'],
-    ['aigües', 'aigues'],
-    ['medi ambient', 'medi'],
-    ['cementi', 'cementi'],
-    ['esports', 'esport'],
+    ['neteja', 'neteja'], ['residus', 'residus'], ['via pública', 'via'],
+    ['via publica', 'via'], ['vies públiques', 'via'], ['llicència', 'llicènc'],
+    ['llicencia', 'llicènc'], ['llum', 'llum'], ['enllumenat', 'llum'],
+    ['soroll', 'soroll'], ['trànsit', 'trànsit'], ['transit', 'trànsit'],
+    ['urbanisme', 'urbanisme'], ['obres', 'obres'], ['parcs', 'parc'],
+    ['jardins', 'parc'], ['transport', 'transport'], ['seguretat', 'seguretat'],
+    ['clavegueram', 'clavegueram'], ['habitatge', 'habitatge'], ['medi ambient', 'medi'],
   ];
-  for (const [keyword, search] of patterns) {
-    if (lower.includes(keyword)) return search;
-  }
+  for (const [kw, search] of patterns) if (lower.includes(kw)) return search;
   return null;
 }
-
-// ─── Query type detection ─────────────────────────────────────────────────────
 
 function detectQueryType(text: string): 'timeline' | 'barri' | 'canal' | 'clas1' | 'sentiment' | 'alerts' | 'navigate' | 'general' {
   const lower = text.toLowerCase();
-  if (/evolució|evolutiu|temporal|per dies|per mesos|gràfic.*temps|tendència|trend|timeline/i.test(lower)) return 'timeline';
+  if (/evolució|evolutiu|temporal|per dies|per mesos|gràfic.*temps|tendència|trend/i.test(lower)) return 'timeline';
   if (/barri|barris|zona|zones/i.test(lower)) return 'barri';
   if (/canal|canals|telèfon|web|presencial|correu/i.test(lower)) return 'canal';
   if (/categoria|categories|tipus|classe/i.test(lower)) return 'clas1';
-  if (/sentiment|satisfacci|valoració|positiu|negatiu|puntuació/i.test(lower)) return 'sentiment';
+  if (/sentiment|satisfacci|valoració|positiu|negatiu/i.test(lower)) return 'sentiment';
   if (/alerta|alertes|crític|urgent|prioritari/i.test(lower)) return 'alerts';
-  if (/porta'm|porta'ns|ves a|navega|obre|mostra'm la pàgina|anar a/i.test(lower)) return 'navigate';
+  if (/porta'm|ves a|navega|anar a/i.test(lower)) return 'navigate';
   return 'general';
 }
 
-function detectNavigationTarget(text: string): string | null {
-  const lower = text.toLowerCase();
-  if (/alertes|alertas|crítiques|critiques/i.test(lower)) return '/alertes';
-  if (/estadíst|estadist/i.test(lower)) return '/estadistiques';
-  if (/tendènci|tendenci/i.test(lower)) return '/tendencies';
-  if (/mapa/i.test(lower)) return '/mapa';
-  if (/barris/i.test(lower)) return '/barris';
-  if (/missatge|missatg|mensaje/i.test(lower)) return '/missatges';
-  if (/informe/i.test(lower)) return '/informes';
-  if (/inici|inicio|home/i.test(lower)) return '/';
-  return null;
+function detectNavigationTarget(text: string): string {
+  if (/alertes|crítiques/i.test(text)) return '/alertes';
+  if (/estadíst/i.test(text)) return '/estadistiques';
+  if (/tendènci/i.test(text)) return '/tendencies';
+  if (/mapa/i.test(text)) return '/mapa';
+  if (/barris\b/i.test(text)) return '/barris';
+  if (/missatge/i.test(text)) return '/missatges';
+  if (/informe/i.test(text)) return '/informes';
+  return '/';
+}
+
+// ─── Mock fallback (when Supabase is unavailable) ─────────────────────────────
+
+function buildMockResult(queryType: string, lastMsg: string, stats: ChatStats): QueryResult {
+  if (queryType === 'barri') {
+    const data = Object.entries(stats.byBarri).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
+    return { content: `El barri principal és **${stats.topBarri ?? 'N/D'}** amb **${stats.total}** missatges totals.`, chart: data.length ? { type: 'bar', title: 'Missatges per barri', data } : undefined, rowCount: data.length };
+  }
+  if (queryType === 'canal') {
+    const data = Object.entries(stats.byCanal).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
+    return { content: `Canal principal: **${stats.topCanal ?? 'N/D'}**.`, chart: data.length ? { type: 'pie', title: 'Distribució per canal', data } : undefined, rowCount: data.length };
+  }
+  if (queryType === 'clas1') {
+    const data = Object.entries(stats.byClas1 ?? {}).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
+    return { content: `Categoria principal: **${stats.topCategory ?? 'N/D'}**.`, chart: data.length ? { type: 'bar', title: 'Missatges per categoria', data } : undefined, rowCount: data.length };
+  }
+  if (queryType === 'sentiment') {
+    const avg = stats.avgSentiment;
+    return { content: `Sentiment mitjà: **${avg !== null ? avg.toFixed(1) : 'N/D'}/10**. Missatges crítics: **${stats.criticalCount}**.`, rowCount: stats.total };
+  }
+  if (queryType === 'alerts') {
+    return { content: `Hi ha **${stats.criticalCount}** missatges crítics.`, action: { type: 'navigate', href: '/alertes', label: 'Veure alertes crítiques' }, rowCount: stats.criticalCount };
+  }
+  if (queryType === 'navigate') {
+    const href = detectNavigationTarget(lastMsg);
+    return { content: `Et porto a **${href}**.`, action: { type: 'navigate', href, label: `Anar a ${href}` }, rowCount: 0 };
+  }
+  const data = Object.entries(stats.byBarri).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }));
+  return {
+    content: `**Resum:** ${stats.total} missatges · sentiment ${stats.avgSentiment?.toFixed(1) ?? 'N/D'}/10 · ${stats.criticalCount} crítics.\n\n_Nota: connexió a BD no disponible, usant dades del dashboard._`,
+    chart: data.length ? { type: 'bar', title: 'Top barris', data } : undefined,
+    rowCount: stats.total,
+  };
 }
 
 // ─── Real Supabase queries ────────────────────────────────────────────────────
 
-async function runTimelineQuery(
-  supabase: ReturnType<typeof createServerSupabase>,
-  from: Date, to: Date,
-  barri: string | null, clas1: string | null
-): Promise<QueryResult> {
-  let q = supabase.from('sac_messages')
-    .select('data_inici,sentiment')
-    .gte('data_inici', from.toISOString())
-    .lte('data_inici', to.toISOString());
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClient = any;
 
-  if (barri) q = (q as typeof q).ilike('barri', `%${barri}%`);
-  if (clas1) q = (q as typeof q).ilike('clas1', `%${clas1}%`);
+async function runTimelineQuery(sb: SupabaseClient, from: Date, to: Date, barri: string | null, clas1: string | null): Promise<QueryResult> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = sb.from('sac_messages').select('data_inici,sentiment')
+    .gte('data_inici', from.toISOString()).lte('data_inici', to.toISOString());
+  if (barri) q = q.ilike('barri', `%${barri}%`);
+  if (clas1) q = q.ilike('clas1', `%${clas1}%`);
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-
   const rows = data ?? [];
+
   if (rows.length === 0) {
-    const filters: string[] = [];
-    if (barri) filters.push(`barri "${barri}"`);
-    if (clas1) filters.push(`categoria "${clas1}"`);
-    return {
-      content: `No s'han trobat dades${filters.length ? ` per a ${filters.join(' i ')}` : ''} en el període ${from.toLocaleDateString('ca-ES')} – ${to.toLocaleDateString('ca-ES')}.`,
-      rowCount: 0,
-    };
+    const filters = [barri && `barri "${barri}"`, clas1 && `categoria "${clas1}"`].filter(Boolean).join(' i ');
+    return { content: `No s'han trobat dades${filters ? ` per a ${filters}` : ''} entre ${from.toLocaleDateString('ca-ES')} i ${to.toLocaleDateString('ca-ES')}.`, rowCount: 0 };
   }
 
-  // Group by day
   const dayMap = new Map<string, number>();
   for (const r of rows) {
     if (!r.data_inici) continue;
     const day = r.data_inici.slice(0, 10);
     dayMap.set(day, (dayMap.get(day) ?? 0) + 1);
   }
-  const chartData = Array.from(dayMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name, value]) => ({ name: name.slice(5), value })); // show MM-DD
-
-  const titleParts: string[] = ['Evolució diària'];
-  if (clas1) titleParts.push(clas1);
-  if (barri) titleParts.push(barri);
-
-  const filters: string[] = [];
-  if (barri) filters.push(`barri **${barri}**`);
-  if (clas1) filters.push(`categoria **${clas1}**`);
-
-  // Build navigate action to see messages
+  const chartData = Array.from(dayMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([name, value]) => ({ name: name.slice(5), value }));
+  const titleParts = ['Evolució diària', clas1, barri].filter(Boolean).join(' · ');
+  const filterText = [barri && `**${barri}**`, clas1 && `**${clas1}**`].filter(Boolean).join(', ');
   const params = new URLSearchParams();
   if (barri) params.set('barri', barri);
   if (clas1) params.set('clas1', clas1);
-  const href = `/missatges${params.toString() ? '?' + params.toString() : ''}`;
 
   return {
-    content: `He trobat **${rows.length}** missatges${filters.length ? ` de ${filters.join(', ')}` : ''} entre el **${from.toLocaleDateString('ca-ES')}** i el **${to.toLocaleDateString('ca-ES')}**.`,
-    chart: chartData.length > 0
-      ? { type: 'area', title: titleParts.join(' · '), data: chartData }
-      : undefined,
-    action: {
-      type: 'navigate',
-      label: `Veure els ${rows.length} missatges a la llista`,
-      href,
-    },
+    content: `He trobat **${rows.length}** missatges${filterText ? ` de ${filterText}` : ''} entre el **${from.toLocaleDateString('ca-ES')}** i el **${to.toLocaleDateString('ca-ES')}**.`,
+    chart: chartData.length > 0 ? { type: 'area', title: titleParts, data: chartData } : undefined,
+    action: { type: 'navigate', label: `Veure els ${rows.length} missatges`, href: `/missatges${params.toString() ? '?' + params.toString() : ''}` },
     rowCount: rows.length,
   };
 }
 
-async function runStatsQuery(
-  supabase: ReturnType<typeof createServerSupabase>,
-  from: Date, to: Date,
-  barri: string | null, clas1: string | null,
-  groupBy: 'barri' | 'canal' | 'clas1'
-): Promise<QueryResult> {
-  let q = supabase.from('sac_messages')
-    .select('barri,canal,clas1,sentiment')
-    .gte('data_inici', from.toISOString())
-    .lte('data_inici', to.toISOString());
-
-  if (barri) q = (q as typeof q).ilike('barri', `%${barri}%`);
-  if (clas1) q = (q as typeof q).ilike('clas1', `%${clas1}%`);
+async function runStatsQuery(sb: SupabaseClient, from: Date, to: Date, barri: string | null, clas1: string | null, groupBy: 'barri' | 'canal' | 'clas1'): Promise<QueryResult> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = sb.from('sac_messages').select('barri,canal,clas1,sentiment')
+    .gte('data_inici', from.toISOString()).lte('data_inici', to.toISOString());
+  if (barri) q = q.ilike('barri', `%${barri}%`);
+  if (clas1) q = q.ilike('clas1', `%${clas1}%`);
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-
   const rows = data ?? [];
-  if (rows.length === 0) {
-    return { content: 'No s\'han trobat dades per als filtres especificats.', rowCount: 0 };
-  }
+  if (rows.length === 0) return { content: 'No s\'han trobat dades per als filtres especificats.', rowCount: 0 };
 
   const countMap = new Map<string, number>();
   for (const r of rows) {
-    const key = (groupBy === 'barri' ? r.barri : groupBy === 'canal' ? r.canal : r.clas1) ?? 'Desconegut';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const key = ((r as any)[groupBy]) ?? 'Desconegut';
     countMap.set(key, (countMap.get(key) ?? 0) + 1);
   }
-
-  const chartData = Array.from(countMap.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([name, value]) => ({ name, value }));
-
-  const titles: Record<string, string> = { barri: 'Missatges per barri', canal: 'Distribució per canal', clas1: 'Missatges per categoria' };
-  const chartType: ChatChartData['type'] = groupBy === 'canal' ? 'pie' : 'bar';
-  const top = chartData[0];
-
-  const sentiments = rows.map(r => parseSentiment(r.sentiment)).filter(s => s !== null) as number[];
+  const chartData = Array.from(countMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, value]) => ({ name, value }));
+  const sentiments = rows.map((r: { sentiment: string | null }) => parseSentiment(r.sentiment)).filter((s): s is number => s !== null);
   const avg = sentiments.length > 0 ? (sentiments.reduce((a, b) => a + b, 0) / sentiments.length).toFixed(1) : 'N/D';
-
-  const labelMap: Record<string, string> = { barri: 'barri', canal: 'canal', clas1: 'categoria' };
-  const content = `He analitzat **${rows.length}** missatges.\n${top ? `El ${labelMap[groupBy]} principal és **"${top.name}"** amb **${top.value}** missatges.` : ''}\nSentiment mitjà: **${avg}/10**`;
+  const top = chartData[0];
+  const titles: Record<string, string> = { barri: 'Missatges per barri', canal: 'Distribució per canal', clas1: 'Missatges per categoria' };
+  const labels: Record<string, string> = { barri: 'barri', canal: 'canal', clas1: 'categoria' };
 
   return {
-    content,
-    chart: { type: chartType, title: titles[groupBy], data: chartData },
+    content: `**${rows.length}** missatges analitzats.${top ? `\nEl ${labels[groupBy]} principal és **"${top.name}"** amb **${top.value}** missatges.` : ''}\nSentiment mitjà: **${avg}/10**`,
+    chart: { type: groupBy === 'canal' ? 'pie' : 'bar', title: titles[groupBy], data: chartData },
     rowCount: rows.length,
   };
 }
 
-async function runSentimentQuery(
-  supabase: ReturnType<typeof createServerSupabase>,
-  from: Date, to: Date,
-  barri: string | null, clas1: string | null
-): Promise<QueryResult> {
-  let q = supabase.from('sac_messages')
-    .select('sentiment,barri')
-    .gte('data_inici', from.toISOString())
-    .lte('data_inici', to.toISOString());
-
-  if (barri) q = (q as typeof q).ilike('barri', `%${barri}%`);
-  if (clas1) q = (q as typeof q).ilike('clas1', `%${clas1}%`);
+async function runSentimentQuery(sb: SupabaseClient, from: Date, to: Date, barri: string | null, clas1: string | null): Promise<QueryResult> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = sb.from('sac_messages').select('sentiment')
+    .gte('data_inici', from.toISOString()).lte('data_inici', to.toISOString());
+  if (barri) q = q.ilike('barri', `%${barri}%`);
+  if (clas1) q = q.ilike('clas1', `%${clas1}%`);
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-
-  const rows = data ?? [];
-  const sentiments = rows.map(r => parseSentiment(r.sentiment)).filter(s => s !== null) as number[];
+  const sentiments = (data ?? []).map((r: { sentiment: string | null }) => parseSentiment(r.sentiment)).filter((s): s is number => s !== null);
   if (sentiments.length === 0) return { content: 'No hi ha dades de sentiment per al filtre seleccionat.', rowCount: 0 };
 
   const avg = sentiments.reduce((a, b) => a + b, 0) / sentiments.length;
   const critical = sentiments.filter(s => s < 3.5).length;
   const positive = sentiments.filter(s => s >= 7).length;
   const label = avg >= 7 ? 'positiu' : avg >= 4 ? 'neutre' : 'negatiu';
-
-  // Distribution chart
   const buckets: Record<string, number> = {};
   for (let i = 0; i <= 9; i++) buckets[`${i}-${i + 1}`] = 0;
-  for (const s of sentiments) {
-    const b = Math.min(Math.floor(s), 9);
-    buckets[`${b}-${b + 1}`] = (buckets[`${b}-${b + 1}`] ?? 0) + 1;
-  }
+  for (const s of sentiments) { const b = Math.min(Math.floor(s), 9); buckets[`${b}-${b + 1}`]++; }
   const chartData = Object.entries(buckets).map(([name, value]) => ({ name, value }));
 
-  const filterNote = barri ? ` al barri **${barri}**` : '';
   return {
-    content: `Sentiment${filterNote}: **${avg.toFixed(1)}/10** (${label})\n• Missatges crítics (< 3.5): **${critical}** (${Math.round(critical / sentiments.length * 100)}%)\n• Missatges positius (≥ 7): **${positive}** (${Math.round(positive / sentiments.length * 100)}%)\n• Total analitzats: **${sentiments.length}**`,
+    content: `Sentiment ${barri ? `a **${barri}**` : ''}: **${avg.toFixed(1)}/10** (${label})\n• Crítics (< 3.5): **${critical}** (${Math.round(critical / sentiments.length * 100)}%)\n• Positius (≥ 7): **${positive}** (${Math.round(positive / sentiments.length * 100)}%)\n• Total: **${sentiments.length}**`,
     chart: { type: 'bar', title: 'Distribució del sentiment', data: chartData },
-    rowCount: rows.length,
+    rowCount: sentiments.length,
   };
 }
 
-// ─── Main handler ─────────────────────────────────────────────────────────────
+async function runAlertsQuery(sb: SupabaseClient, from: Date, to: Date): Promise<QueryResult> {
+  const { data, error } = await sb.from('sac_messages').select('sentiment')
+    .gte('data_inici', from.toISOString()).lte('data_inici', to.toISOString());
+  if (error) throw new Error(error.message);
+  const rows = data ?? [];
+  const critical = rows.filter((r: { sentiment: string | null }) => { const s = parseSentiment(r.sentiment); return s !== null && s < 3.5; }).length;
+  return {
+    content: `Hi ha **${critical}** missatges crítics (sentiment < 3.5) de **${rows.length}** totals (${rows.length > 0 ? Math.round(critical / rows.length * 100) : 0}%).`,
+    action: { type: 'navigate', href: '/alertes', label: 'Veure alertes crítiques' },
+    rowCount: critical,
+  };
+}
+
+// ─── Main POST handler ────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const body: ChatPayload = await req.json();
-  const { messages, filters, apiKey: clientApiKey, stats: clientStats } = body;
-
-  const defaultFrom = filters?.from ? new Date(filters.from) : new Date(Date.now() - 30 * 86400000);
-  const defaultTo = filters?.to ? new Date(filters.to) : new Date();
-  const lastMsg = messages[messages.length - 1]?.content ?? '';
-
-  const { from, to, explicit: explicitDate } = parseDateRange(lastMsg, defaultFrom, defaultTo);
-  const barri = extractBarri(lastMsg);
-  const clas1Keyword = extractClas1Keyword(lastMsg);
-  const queryType = detectQueryType(lastMsg);
-
-  // Always query real data from Supabase
-  const supabase = createServerSupabase();
-
+  // Outermost try/catch: ALWAYS returns JSON, never lets Next.js return HTML 500
   try {
+    const body: ChatPayload = await req.json();
+    const { messages, filters, apiKey: clientApiKey, stats: clientStats } = body;
+
+    const defaultFrom = filters?.from ? new Date(filters.from) : new Date(Date.now() - 30 * 86400000);
+    const defaultTo = filters?.to ? new Date(filters.to) : new Date();
+    const lastMsg = messages[messages.length - 1]?.content ?? '';
+
+    const { from, to, explicit: explicitDate } = parseDateRange(lastMsg, defaultFrom, defaultTo);
+    const barri = extractBarri(lastMsg);
+    const clas1Keyword = extractClas1Keyword(lastMsg);
+    const queryType = detectQueryType(lastMsg);
+    const stats = clientStats ?? EMPTY_STATS;
+
+    // Try to initialise Supabase (might fail if env vars are missing)
+    let supabase: SupabaseClient = null;
+    try {
+      const { createServerSupabase } = await import('@/lib/supabase-server');
+      supabase = createServerSupabase();
+    } catch {
+      // Will use mock fallback below
+    }
+
     let result: QueryResult;
 
-    if (queryType === 'navigate') {
-      const href = detectNavigationTarget(lastMsg) ?? '/';
-      const pageNames: Record<string, string> = {
-        '/alertes': 'Alertes crítiques',
-        '/estadistiques': 'Estadístiques',
-        '/tendencies': 'Tendències',
-        '/mapa': 'Mapa',
-        '/barris': 'Barris',
-        '/missatges': 'Missatges',
-        '/informes': 'Informes',
-        '/': 'Inici',
-      };
-      result = {
-        content: `D'acord! Et porto a la pàgina **${pageNames[href] ?? href}**.`,
-        action: { type: 'navigate', href, label: `Anar a ${pageNames[href] ?? href}` },
-        rowCount: 0,
-      };
+    if (!supabase) {
+      result = buildMockResult(queryType, lastMsg, stats);
+    } else if (queryType === 'navigate') {
+      const href = detectNavigationTarget(lastMsg);
+      const names: Record<string, string> = { '/alertes': 'Alertes', '/estadistiques': 'Estadístiques', '/tendencies': 'Tendències', '/mapa': 'Mapa', '/barris': 'Barris', '/missatges': 'Missatges', '/informes': 'Informes', '/': 'Inici' };
+      result = { content: `D'acord! Et porto a **${names[href] ?? href}**.`, action: { type: 'navigate', href, label: `Anar a ${names[href] ?? href}` }, rowCount: 0 };
     } else if (queryType === 'timeline') {
       result = await runTimelineQuery(supabase, from, to, barri, clas1Keyword);
     } else if (queryType === 'canal') {
@@ -370,67 +310,42 @@ export async function POST(req: NextRequest) {
     } else if (queryType === 'sentiment') {
       result = await runSentimentQuery(supabase, from, to, barri, clas1Keyword);
     } else if (queryType === 'alerts') {
-      let q = supabase.from('sac_messages')
-        .select('sentiment,barri,canal,data_inici')
-        .gte('data_inici', from.toISOString())
-        .lte('data_inici', to.toISOString());
-      const { data } = await q;
-      const rows = data ?? [];
-      const critical = rows.filter(r => {
-        const s = parseSentiment(r.sentiment);
-        return s !== null && s < 3.5;
-      });
-      result = {
-        content: `Hi ha **${critical.length}** missatges crítics (sentiment < 3.5) de **${rows.length}** totals en el període.\n\nRepresenten el **${rows.length > 0 ? Math.round(critical.length / rows.length * 100) : 0}%** del total.`,
-        action: { type: 'navigate', href: '/alertes', label: 'Veure alertes crítiques' },
-        rowCount: critical.length,
-      };
-    } else if (queryType === 'barri') {
-      result = await runStatsQuery(supabase, from, to, barri, clas1Keyword, 'barri');
+      result = await runAlertsQuery(supabase, from, to);
     } else {
-      // General: run barri stats as default
+      // 'barri' or 'general'
       result = await runStatsQuery(supabase, from, to, barri, clas1Keyword, 'barri');
     }
 
-    // If OpenAI key is available, enhance the text response
+    // Optional: use OpenAI to improve text if key is present and we got data
     const apiKey = clientApiKey || process.env.OPENAI_API_KEY || '';
     if (apiKey && result.rowCount > 0) {
       try {
         const { OpenAI } = await import('openai');
         const openai = new OpenAI({ apiKey });
-        const dataContext = `Consulta de l'usuari: "${lastMsg}"\nPeriode: ${from.toLocaleDateString('ca-ES')} – ${to.toLocaleDateString('ca-ES')}\nResultat de la query: ${result.rowCount} files trobades.\nContingut generat: ${result.content}`;
         const completion = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
-            {
-              role: 'system',
-              content: `Ets un assistent analític del SAC de Mataró. Tens el resultat d'una query real a la BD. Millora el text de resposta en català: sigues concís, usa **negreta** per valors importants. Retorna JSON: {"content": "text millorat"}. NO canviïs els números ni inventes dades.`,
-            },
-            { role: 'user', content: dataContext },
+            { role: 'system', content: 'Ets un assistent del SAC de Mataró. Millora el text en català (usa **negreta**). Retorna JSON: {"content":"text"}. NO canviïs els números.' },
+            { role: 'user', content: `Consulta: "${lastMsg}"\nResultat: ${result.content}` },
           ],
-          temperature: 0.2,
-          max_tokens: 300,
+          temperature: 0.2, max_tokens: 300,
           response_format: { type: 'json_object' },
         });
-        const raw = completion.choices[0].message.content ?? '{}';
-        const parsed = JSON.parse(raw) as { content?: string };
+        const parsed = JSON.parse(completion.choices[0].message.content ?? '{}') as { content?: string };
         if (parsed.content) result.content = parsed.content;
       } catch {
-        // OpenAI failed, keep the template-generated content
+        // Keep template content if OpenAI fails
       }
     }
 
-    // Add period note if using explicit date from message (different from dashboard filter)
-    if (explicitDate) {
-      result.content += `\n\n_Dades filtrades per: ${from.toLocaleDateString('ca-ES')} – ${to.toLocaleDateString('ca-ES')}_`;
-      if (!result.action) {
-        result.action = {
-          type: 'setFilter',
-          label: `Aplicar aquest rang al dashboard`,
-          dateFrom: from.toISOString(),
-          dateTo: to.toISOString(),
-        };
-      }
+    // If the user specified explicit dates in the message, offer to apply them to the dashboard
+    if (explicitDate && !result.action) {
+      result.action = {
+        type: 'setFilter',
+        label: `Aplicar ${from.toLocaleDateString('ca-ES')} – ${to.toLocaleDateString('ca-ES')} al dashboard`,
+        dateFrom: from.toISOString(),
+        dateTo: to.toISOString(),
+      };
     }
 
     return NextResponse.json({
@@ -441,12 +356,12 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (e: unknown) {
-    const errMsg = e instanceof Error ? e.message : 'Error desconegut';
+    // Always return JSON so the frontend never sees "Error de connexió"
     return NextResponse.json({
       role: 'assistant',
-      content: `Error en consultar les dades: ${errMsg}`,
+      content: `Error en processar la consulta: ${e instanceof Error ? e.message : 'Error desconegut'}. Si el problema persisteix, comprova la configuració.`,
       chart: null,
       action: null,
-    }, { status: 200 });
+    });
   }
 }
